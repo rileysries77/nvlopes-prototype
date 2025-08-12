@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Nvelopes • Smaller Envelopes + Add Envelope On‑Demand</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
+  <style>
+    :root{ --primary:#80e27e; --on-primary:#032106; --surface:#0e1116; --surface-2:#141922; --surface-3:#10151c; --text:#e6ebf2; --muted:#aab4c3; --outline:#26303a; --danger:#ff6b6b; --radius:14px; --radius-lg:18px; --shadow-1:0 1px 2px rgba(0,0,0,.45), 0 2px 6px rgba(0,0,0,.35);} *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0; font-family:Roboto, system-ui, -apple-system, Segoe UI, Helvetica, Arial; color:var(--text); background:linear-gradient(180deg,#0b0d11 0%, #0a0c0f 50%, #080a0d 100%);}  
+    .app{max-width:1280px; margin:0 auto; padding:16px; display:grid; gap:16px; grid-template-rows:auto auto 1fr; min-height:100dvh}
+    .appbar{ display:flex; align-items:center; gap:12px; padding:12px 16px; background:var(--surface-2); border:1px solid var(--outline); border-radius:var(--radius-lg); box-shadow:var(--shadow-1); }
+    .logo{ width:40px; height:40px; border-radius:12px; display:grid; place-items:center; font-weight:900; background:linear-gradient(135deg,#7bd88f,#6cb6ff); color:#041e0b; }
+    .brand{ display:grid; } .brand .title{ font-weight:900; } .brand .sub{ color:var(--muted); font-size:12px; }
+    .tray{ margin-left:auto; display:flex; gap:8px; }
+    .btn{ appearance:none; border:1px solid var(--outline); background:#0f141a; color:var(--text); padding:10px 12px; border-radius:12px; font-weight:700; cursor:pointer; }
+    .btn-sm{ padding:8px 10px; font-weight:600 } .btn-primary{ background:var(--primary); color:var(--on-primary); border-color:transparent }
+    .btn-tonal{ background:#1a2a1e; color:#c8f3c7; border-color:#2c3b2e } .btn-danger{ background:linear-gradient(180deg,#3a1111,#240a0a); color:#ffdede; border-color:#4a1b1b }
+    .input, .select{ background:#0f141a; color:var(--text); border:1px solid var(--outline); border-radius:12px; padding:10px 12px }
+
+    .stats{ display:grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap:12px; }
+    .card{ background:var(--surface-2); border:1px solid var(--outline); border-radius:var(--radius-lg); box-shadow:var(--shadow-1); padding:14px; }
+    .card h4{ margin:0 0 6px 0; font-size:12px; text-transform:uppercase; letter-spacing:.4px; color:var(--muted) }
+    .value{ font-size:26px; font-weight:900 }
+
+    .layout{ display:grid; grid-template-columns: 1fr 0.9fr 1fr; gap:16px; align-items:start; }
+    .panel{ background:var(--surface-2); border:1px solid var(--outline); border-radius:var(--radius-lg); box-shadow:var(--shadow-1); padding:12px; display:flex; flex-direction:column; gap:12px; min-height:520px; }
+    .panel h3{ margin:4px 0; font-size:16px }
+
+    /* ENVELOPES (paper style — smaller) */
+    .env-header{ display:flex; align-items:center; justify-content:space-between; gap:8px }
+    .env-actions{ display:flex; gap:8px }
+    .env-form-wrap{ display:none }
+    .env-form-wrap.open{ display:block; animation: drop .18s ease-out }
+    @keyframes drop{ from{ transform: translateY(-4px); opacity:.0 } to{ transform: translateY(0); opacity:1 } }
+    .env-form{ display:flex; gap:8px; flex-wrap:wrap; align-items:flex-end; background:rgba(255,255,255,.02); border:1px dashed var(--outline); padding:10px; border-radius:12px }
+    .env-form label{ display:block; font-size:12px; color:var(--muted); margin:0 0 4px }
+
+    .env-list{ display:grid; gap:10px; overflow:auto; max-height:65vh; padding-right:4px }
+    .env{ position:relative; background:linear-gradient(180deg,#f7f1e4,#eee5d2); color:#2a2a2a; border:1px solid #d9ccb0; border-radius:10px; padding:12px 12px 10px 12px; box-shadow: 0 2px 4px rgba(0,0,0,.22), inset 0 1px 0 rgba(255,255,255,.6); cursor:grab; user-select:none; }
+    .env:active{ cursor:grabbing }
+    .env .stamp{ position:absolute; right:8px; top:8px; width:24px; height:24px; border-radius:6px; background:radial-gradient(circle at 30% 30%, #fff 0 30%, #ffe0f0 31% 100%); border:1px dashed #b88; box-shadow: inset 0 1px 0 rgba(255,255,255,.6); opacity:.9 }
+    .env::before{ content:""; position:absolute; left:0; right:0; top:0; height:42%; background:linear-gradient(180deg,#f1e9d6,#e8dcc3); clip-path: polygon(0 0, 100% 0, 50% 100%); border-top-left-radius:10px; border-top-right-radius:10px; border-bottom:1px solid rgba(0,0,0,.06); }
+    .env::after{ content:""; position:absolute; left:10px; right:10px; top:42%; height:1px; background:linear-gradient(90deg, transparent, rgba(0,0,0,.18), transparent); opacity:.6 }
+    .env .window{ position:relative; margin-top:26px; background:rgba(255,255,255,.7); border:1px solid rgba(0,0,0,.08); border-radius:8px; padding:8px 10px; backdrop-filter: blur(1px); box-shadow: inset 0 1px 0 rgba(255,255,255,.65); }
+    .env .name{ font-weight:900; font-size:13px; letter-spacing:.2px; color:#1e1e1e }
+    .env .meta{ color:#4a4a4a; font-size:11px }
+    .env .tape{ margin-top:6px; height:6px; border-radius:999px; background:repeating-linear-gradient( 90deg, rgba(0,0,0,.08) 0 10px, rgba(0,0,0,.12) 10px 20px ); overflow:hidden; border:1px solid rgba(0,0,0,.08); }
+    .env .bar{ height:100%; background:linear-gradient(90deg,#80e27e,#6cb6ff); width:0% }
+    .env.dragover{ outline:2px dashed #5aa65a; outline-offset:6px }
+
+    /* MONEY TABLE */
+    .money{ display:grid; grid-template-rows:auto auto 1fr; position:relative }
+    .money-head{ position:sticky; top:0; z-index:3; background:linear-gradient(180deg, rgba(20,25,34,.98), rgba(20,25,34,.92)); padding-bottom:6px; border-bottom:1px dashed var(--outline) }
+    .money-stats{ display:flex; justify-content:space-between; align-items:center; margin-bottom:6px }
+    .money-stats strong{ font-size:20px }
+    .tray-combined{ position:sticky; top:56px; z-index:2; background:linear-gradient(180deg, rgba(20,25,34,.96), rgba(20,25,34,.90)); border:1px dashed var(--outline); border-radius:14px; padding:10px; box-shadow: inset 0 1px 0 rgba(255,255,255,.04); min-height:120px }
+    .tray-combined.drop-active{ border-color:var(--primary); box-shadow: 0 0 0 2px rgba(128,226,126,.15) inset; }
+    .tray-row{ display:flex; gap:12px; align-items:center; justify-content:space-between; flex-wrap:wrap; }
+    .tray-instructions{ color:var(--muted); font-size:13px; display:flex; align-items:center; gap:8px }
+    .tray-instructions .tag{ background:#1a2620; color:#c8f3c7; border:1px solid #294033; padding:4px 8px; border-radius:999px; font-size:12px; font-weight:700 }
+    #denomControls{ display:flex; gap:8px; align-items:center }
+
+    /* Bills */
+    .bills{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-top:10px }
+    .bill{ position:relative; width:128px; height:60px; border-radius:8px; user-select:none; cursor:grab; box-shadow:0 2px 4px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.06); display:grid; place-items:center; padding:8px; border:1px solid rgba(0,0,0,.35); overflow:hidden; }
+    .bill:active{ cursor:grabbing }
+    .bill .note-center{ font-weight:900; font-size:20px; letter-spacing:.5px; text-shadow:0 1px 0 rgba(0,0,0,.2); }
+    .bill .note-corner{ position:absolute; font-weight:800; font-size:11px; opacity:.9 }
+    .bill .note-corner.tl{ top:6px; left:8px }
+    .bill .note-corner.br{ bottom:6px; right:8px }
+    .bill .seal{ position:absolute; width:28px; height:28px; border-radius:50%; display:grid; place-items:center; font-weight:800; font-size:12px; opacity:.8; right:8px; top:8px; text-shadow:0 1px 0 rgba(0,0,0,.2) }
+    .bill .serial{ position:absolute; left:8px; bottom:6px; font-family:monospace; font-size:10px; letter-spacing:.5px; opacity:.85 }
+    .bill .ribbon{ position:absolute; top:-6px; bottom:-6px; width:6px; left:57%; filter:blur(.2px); opacity:.55 }
+    .bill::before{ content:""; position:absolute; inset:0; background:
+      radial-gradient(200px 50px at 50% -20%, rgba(255,255,255,.14), transparent 60%),
+      repeating-linear-gradient(90deg, rgba(255,255,255,.06), rgba(255,255,255,.06) 1px, transparent 1px, transparent 4px);
+      pointer-events:none; mix-blend-mode:overlay; }
+    .bill::after{ content:""; position:absolute; inset:0; background:repeating-conic-gradient(from 0deg, rgba(255,255,255,.04) 0 10deg, transparent 10deg 20deg); opacity:.5; pointer-events:none; mix-blend-mode:overlay }
+    .bill-5  { background:linear-gradient(180deg,#2a2335,#201a2b); border-color:#3d3350; color:#e9e0ff }
+    .bill-5 .seal{ background:#473761; color:#f2eaff }
+    .bill-10 { background:linear-gradient(180deg,#3a2a18,#2a1e12); border-color:#533a22; color:#ffe7c7 }
+    .bill-10 .seal{ background:#5a3b1f; color:#ffe7c7 }
+    .bill-20 { background:linear-gradient(180deg,#223a2a,#18281f); border-color:#2f4e3b; color:#cfead9 }
+    .bill-20 .seal{ background:#2d5a40; color:#e7fff2 }
+    .bill-50 { background:linear-gradient(180deg,#402338,#2d1928); border-color:#5a324e; color:#ffd8ef }
+    .bill-50 .seal{ background:#6a3a5b; color:#ffe5f6 }
+    .bill-100{ background:linear-gradient(180deg,#1c2a3d,#121c29); border-color:#2b3f58; color:#d6e8ff }
+    .bill-100 .seal{ background:#27415f; color:#e6f2ff }
+    .bill-100 .ribbon{ background:linear-gradient(180deg, #3aa0ff, #7cc6ff); }
+
+    .more-count{ color:var(--muted); font-size:12px }
+
+    /* Transactions */
+    .tx-header{ display:flex; align-items:center; justify-content:space-between; gap:8px }
+    .tx-actions{ display:flex; gap:8px; align-items:center; flex-wrap:wrap }
+    .tx-form-wrap{ display:none }
+    .tx-form-wrap.open{ display:block; animation: drop .18s ease-out }
+    .tx-form{ display:flex; flex-wrap:wrap; gap:12px; align-items:flex-end; background:rgba(255,255,255,.02); border:1px dashed var(--outline); padding:10px; border-radius:12px }
+    .tx-form label{ display:block; font-size:12px; color:var(--muted); margin:0 0 4px }
+    .tx-list{ display:grid; gap:10px; overflow:auto; max-height:65vh; padding-right:4px }
+    .tx{ background:var(--surface-3); border:1px solid var(--outline); border-radius:14px; padding:10px; display:grid; grid-template-columns: 1fr auto; align-items:center; gap:8px }
+    .tx .meta{ color:var(--muted); font-size:12px }
+    .tx.dragover{ outline:2px dashed var(--primary); outline-offset:6px }
+
+    @media (max-width: 1100px){ .layout{ grid-template-columns:1fr } .env-list,.tx-list{ max-height:none } .tray-combined{ position:static } .bill{ width:44vw; max-width:220px; height:72px } }
+  </style>
+</head>
+<body>
+  <div class="app" id="app">
+    <section class="appbar">
+      <div class="logo">N</div>
+      <div class="brand">
+        <span class="title">Nvelopes</span>
+        <span class="sub">Smaller envelopes + on‑demand add forms</span>
+      </div>
+      <div class="tray">
+        <button id="exportBtn" class="btn btn-tonal btn-sm">Export</button>
+        <button id="importBtn" class="btn btn-sm">Import</button>
+        <button id="resetBtn" class="btn btn-danger btn-sm">Reset</button>
+      </div>
+    </section>
+
+    <section class="stats">
+      <div class="card"><h4>Envelope Balance</h4><div id="stat-env-balance" class="value">$0.00</div></div>
+      <div class="card"><h4>Bank Balance</h4><div id="stat-bank-balance" class="value">$0.00</div></div>
+    </section>
+
+    <section class="layout">
+      <!-- ENVELOPES -->
+      <div class="panel">
+        <div class="env-header">
+          <h3>Envelopes</h3>
+          <div class="env-actions">
+            <button id="toggleEnvForm" class="btn btn-primary btn-sm">Add</button>
+          </div>
+        </div>
+
+        <!-- Hidden until Add is clicked -->
+        <div id="envFormWrap" class="env-form-wrap" aria-hidden="true">
+          <div class="env-form">
+            <div><label>Name</label><input id="newEnvName" class="input" placeholder="New envelope name" /></div>
+            <div><label>Budget ($)</label><input id="newEnvBudget" class="input" type="number" inputmode="decimal" step="0.01" placeholder="0.00" /></div>
+            <div style="display:flex; gap:8px; align-items:flex-end;">
+              <button id="addEnvelopeConfirm" class="btn btn-primary">Add</button>
+              <button id="cancelEnvForm" class="btn">Cancel</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="env-list" id="envList"></div>
+      </div>
+
+      <!-- MONEY TABLE -->
+      <div class="panel money" id="moneyPanel">
+        <div class="money-head">
+          <h3>Money Table (Unassigned Cash)</h3>
+          <div class="money-stats">
+            <strong id="pool-amount">$0.00</strong>
+            <div style="color:var(--muted); font-size:12px">Drop <b>deposits</b> or <b>envelopes</b> onto the tray below.</div>
+          </div>
+        </div>
+
+        <!-- COMBINED TRAY: Drop + Denoms + Bills in one section -->
+        <div id="billTray" class="tray-combined" aria-label="Money tray. Drop deposits or envelopes here and pick bill denomination.">
+          <div class="tray-row">
+            <div class="tray-instructions"><span>Drop</span><span class="tag">Deposits</span><span>or</span><span class="tag">Envelopes</span><span>here →</span></div>
+            <div id="denomControls">
+              <span style="color:var(--muted); font-size:12px">Denominations:</span>
+              <button class="btn btn-sm" data-denom="5">$5</button>
+              <button class="btn btn-sm" data-denom="10">$10</button>
+              <button class="btn btn-sm" data-denom="20">$20</button>
+              <button class="btn btn-sm" data-denom="50">$50</button>
+              <button class="btn btn-sm" data-denom="100">$100</button>
+              <button id="add-cash" class="btn btn-tonal btn-sm">Add Cash</button>
+              <button id="withdraw-cash" class="btn btn-sm">Withdraw</button>
+            </div>
+          </div>
+          <div id="bills" class="bills" aria-live="polite"></div>
+        </div>
+
+        <div style="min-height:8px"></div>
+      </div>
+
+      <!-- TRANSACTIONS -->
+      <div class="panel">
+        <div class="tx-header">
+          <h3>Transactions</h3>
+          <div class="tx-actions">
+            <button id="toggleTxForm" class="btn btn-primary btn-sm">Add Tx</button>
+            <button id="plaidMock" class="btn btn-tonal btn-sm">Mock Import</button>
+          </div>
+        </div>
+
+        <!-- Hidden until Add Tx is clicked -->
+        <div id="txFormWrap" class="tx-form-wrap" aria-hidden="true">
+          <div class="tx-form">
+            <div><label>Date</label><input id="txDate" class="input" type="date" /></div>
+            <div><label>Merchant</label><input id="txMerchant" class="input" placeholder="e.g. Trader Joe's" /></div>
+            <div><label>Type</label><select id="txType" class="select"><option value="expense">Expense (−)</option><option value="deposit">Deposit (+)</option></select></div>
+            <div><label>Amount</label><input id="txAmount" class="input" type="number" inputmode="decimal" step="0.01" placeholder="0.00" /></div>
+            <div style="display:flex; gap:8px; align-items:flex-end;">
+              <button id="addTxConfirm" class="btn btn-primary">Add</button>
+              <button id="cancelTxForm" class="btn">Cancel</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="tx-list" id="txList"></div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const $ = s => document.querySelector(s);
+    const $$ = s => Array.from(document.querySelectorAll(s));
+    const fmt = n => (n||0).toLocaleString(undefined,{style:'currency',currency:'USD'});
+    const clamp = (n,a,b)=>Math.max(a,Math.min(b,n));
+    const todayISO = ()=> new Date().toISOString().slice(0,10);
+    const uid = (p='id') => `${p}_${Math.random().toString(36).slice(2,9)}`;
+
+    // ===== State =====
+    const DEFAULT_STATE = {
+      bankStarting: 3390.37,
+      cashPool: 300,
+      denom: 20,
+      archived: { deposits: 0, expenses: 0 },
+      envelopes: [
+        { id: uid('env'), name:'Rent Payment', budget: 500, balance:100 },
+        { id: uid('env'), name:'Gas',          budget:  60, balance:200 },
+        { id: uid('env'), name:'Cell Phone',   budget: 200, balance:850.32 },
+        { id: uid('env'), name:'Test100',      budget: 100, balance:761.38 },
+        { id: uid('env'), name:'Fun',          budget: 200, balance:200 },
+        { id: uid('env'), name:'Electric',     budget: 200, balance:682.41 },
+        { id: uid('env'), name:'Mortgage',     budget:3000, balance:198.78 },
+      ],
+      transactions: [
+        { id: uid('tx'), date: todayISO(), merchant:'Monthly Maintenance Fee', amount: 6.95, type:'expense', paidAmount:0 },
+        { id: uid('tx'), date: todayISO(), merchant:'Zelle Instant Pmt to Riley Ries', amount:300.00, type:'deposit' },
+        { id: uid('tx'), date: todayISO(), merchant:'Mobile Banking Transfer Withdrawal', amount:100.00, type:'expense', paidAmount:0 },
+      ],
+    };
+
+    const STORAGE_KEY = 'nvelopes_smaller_env_on_demand_v1';
+    let state = load();
+    function load(){
+      try{ const raw = localStorage.getItem(STORAGE_KEY); const s = raw? JSON.parse(raw) : structuredClone(DEFAULT_STATE); if(!s.archived) s.archived={deposits:0,expenses:0}; return s; }catch{ return structuredClone(DEFAULT_STATE) }
+    }
+    function save(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+
+    // ===== Derived =====
+    const envTotal = () => state.envelopes.reduce((sum,e)=> sum + e.balance, 0);
+    const signed = t => t.type==='deposit' ? t.amount : -t.amount;
+    const bankTotal = () => state.bankStarting + state.archived.deposits - state.archived.expenses + state.transactions.reduce((s,t)=> s + signed(t), 0);
+
+    // ===== Render =====
+    function renderAll(){ renderTop(); renderEnvList(); renderTxForm(); renderTxList(); renderPool(); setupDrops(); }
+    function renderTop(){ $('#stat-env-balance').textContent = fmt(envTotal()); $('#stat-bank-balance').textContent = fmt(bankTotal()); $('#pool-amount').textContent = fmt(state.cashPool); }
+
+    // Envelopes
+    function renderEnvList(){ const list=$('#envList'); list.innerHTML=''; state.envelopes.forEach(env=> list.appendChild(renderEnv(env))); }
+    function renderEnv(env){
+      const el = document.createElement('div'); el.className='env'; el.setAttribute('aria-label', `${env.name}, ${fmt(env.balance)} of ${fmt(env.budget)}`);
+      el.draggable = true; // envelope → money tray
+      el.dataset.dragtype = 'env'; el.dataset.envelopeId = env.id;
+      el.innerHTML = `
+        <div class="stamp" aria-hidden="true"></div>
+        <div class="window">
+          <div class="name">${env.name}</div>
+          <div class="meta">${fmt(env.balance)} / ${fmt(env.budget)}</div>
+        </div>
+        <div class="tape"><div class="bar" style="width:${clamp((env.balance/env.budget)*100,0,100)}%"></div></div>
+      `;
+      el.addEventListener('dragstart', e=>{ e.dataTransfer.setData('text/plain', JSON.stringify({type:'env', envelopeId:env.id})); });
+      // accept bills to add funds
+      el.addEventListener('dragover', e=>{ e.preventDefault(); el.classList.add('dragover'); });
+      el.addEventListener('dragleave', ()=> el.classList.remove('dragover'));
+      el.addEventListener('drop', e=>{ e.preventDefault(); el.classList.remove('dragover'); const p=parseDragData(e); if(p?.type==='bill'){ allocateToEnvelope(env.id, p.value); }});
+      return el;
+    }
+
+    // Env form show/hide controls
+    function openEnvForm(){ const wrap=$('#envFormWrap'); wrap.classList.add('open'); wrap.setAttribute('aria-hidden','false'); $('#newEnvName').focus(); }
+    function closeEnvForm(){ const wrap=$('#envFormWrap'); wrap.classList.remove('open'); wrap.setAttribute('aria-hidden','true'); if($('#newEnvName')) $('#newEnvName').value=''; if($('#newEnvBudget')) $('#newEnvBudget').value=''; }
+
+    // Transactions
+    function renderTxForm(){ const wrap = $('#txFormWrap'); if(wrap && wrap.classList.contains('open')){ $('#txDate').value = todayISO(); }}
+    function renderTxList(){ const list=$('#txList'); list.innerHTML=''; [...state.transactions].sort((a,b)=> new Date(b.date)-new Date(a.date)).forEach(tx=> list.appendChild(renderTx(tx))); renderTop(); }
+    function renderTx(tx){
+      const el = document.createElement('div'); el.className='tx';
+      const sign = tx.type==='expense' ? '-' : '+';
+      const paidText = tx.type==='expense' ? ` · paid ${fmt(tx.paidAmount||0)} / ${fmt(tx.amount)}` : '';
+      el.innerHTML = `<div><div><strong>${sign}${fmt(tx.amount)}</strong> · ${tx.merchant||'(No merchant)'}<span class="meta">${paidText}</span></div><div class="meta">${new Date(tx.date).toLocaleDateString()} · id:${tx.id.slice(-5)}</div></div><div style="display:flex; gap:6px;"><button class="btn btn-sm" data-act="delete">Delete</button></div>`;
+      el.draggable = (tx.type==='deposit');
+      if(tx.type==='deposit') el.addEventListener('dragstart', e=> e.dataTransfer.setData('text/plain', JSON.stringify({type:'tx', txId:tx.id})) );
+      // expenses accept bills
+      el.addEventListener('dragover', e=>{ if(tx.type==='expense'){ e.preventDefault(); el.classList.add('dragover'); }});
+      el.addEventListener('dragleave', ()=> el.classList.remove('dragover'));
+      el.addEventListener('drop', e=>{ e.preventDefault(); el.classList.remove('dragover'); const p=parseDragData(e); if(p?.type==='bill' && tx.type==='expense'){ payTransactionWithBill(tx.id, p.value); }});
+      el.querySelector('[data-act="delete"]').addEventListener('click', ()=> deleteTx(tx.id));
+      return el;
+    }
+
+    // Money Tray (bills + controls)
+    function renderPool(){ $('#pool-amount').textContent = fmt(state.cashPool); const b=$('#bills'); b.innerHTML=''; const count=Math.floor(state.cashPool/state.denom); const max=20; for(let i=0;i<Math.min(count,max);i++) b.appendChild(makeBill(state.denom)); if(count>max){ const s=document.createElement('span'); s.className='more-count'; s.textContent = `+${count-max} more`; b.appendChild(s);} }
+    function makeBill(value){ const el=document.createElement('div'); const cls=`bill bill-${value}`; el.className=cls; el.draggable=true; el.dataset.value=String(value); const serial=`NV${String(Math.floor(Math.random()*1e8)).padStart(8,'0')}`; el.innerHTML=`<span class="note-corner tl">$${value}</span><span class="note-center">$${value}</span><span class="note-corner br">$${value}</span><span class="seal">NV</span><span class="serial">${serial}</span><span class="ribbon"></span>`; el.addEventListener('dragstart', e=> e.dataTransfer.setData('text/plain', JSON.stringify({type:'bill', value})) ); return el; }
+
+    function setupDrops(){
+      const tray = $('#billTray');
+      const panel = $('#moneyPanel');
+      ['dragenter','dragover'].forEach(ev => {
+        tray.addEventListener(ev, e=>{ e.preventDefault(); tray.classList.add('drop-active'); });
+        panel.addEventListener(ev, e=>{ e.preventDefault(); });
+      });
+      tray.addEventListener('dragleave', ()=> tray.classList.remove('drop-active'));
+      tray.addEventListener('drop', e=>{ e.preventDefault(); tray.classList.remove('drop-active'); const p=parseDragData(e); if(!p) return; if(p.type==='tx') convertDepositToCash(p.txId); if(p.type==='env') moveEnvelopeToCash(p.envelopeId); });
+      panel.addEventListener('drop', e=>{ if(e.target && (e.target.closest && e.target.closest('#billTray'))) return; e.preventDefault(); const p=parseDragData(e); if(!p) return; if(p.type==='tx') convertDepositToCash(p.txId); if(p.type==='env') moveEnvelopeToCash(p.envelopeId); });
+    }
+
+    // Domain ops
+    function addEnvelope(name,budget){ if(!name) return alert('Envelope name required'); state.envelopes.push({ id:uid('env'), name, budget:Math.max(0,Number(budget)||0), balance:0 }); save(); renderAll(); closeEnvForm(); }
+    function allocateToEnvelope(envelopeId, amount){ amount=Math.floor(amount*100)/100; if(amount<=0) return; if(state.cashPool<amount) { alert('Not enough unassigned cash'); return; } const env=state.envelopes.find(e=>e.id===envelopeId); if(!env) return; env.balance+=amount; state.cashPool-=amount; save(); renderAll(); }
+    function moveEnvelopeToCash(envelopeId){ const env = state.envelopes.find(x=> x.id===envelopeId); if(!env) return; if(env.balance<=0) return; state.cashPool += env.balance; env.balance = 0; save(); renderAll(); }
+
+    function addTxFromForm(){ const date=$('#txDate').value||todayISO(); const merchant=$('#txMerchant').value.trim(); const type=$('#txType').value; const amount=Number($('#txAmount').value||0); if(amount<=0) return alert('Amount must be > 0'); const tx={ id:uid('tx'), date, merchant, amount, type, paidAmount: type==='expense'? 0: undefined }; state.transactions.push(tx); save(); renderAll(); closeTxForm(); }
+    function deleteTx(id){ const i=state.transactions.findIndex(t=>t.id===id); if(i<0) return; state.transactions.splice(i,1); save(); renderAll(); }
+
+    // Drag helpers
+    function parseDragData(e){ try{ return JSON.parse(e.dataTransfer.getData('text/plain')); }catch{ return null; } }
+
+    // Money operations
+    function convertDepositToCash(txId){ const tx = state.transactions.find(t=>t.id===txId); if(!tx) return; if(tx.type!=='deposit'){ alert('Only deposit (positive) transactions can be converted here.'); return; } state.cashPool += tx.amount; state.archived.deposits += tx.amount; const i = state.transactions.findIndex(t=>t.id===txId); if(i>=0) state.transactions.splice(i,1); save(); renderAll(); }
+    function payTransactionWithBill(txId, billValue){ const tx = state.transactions.find(t=>t.id===txId); if(!tx || tx.type!=='expense') return; if(state.cashPool < billValue) { alert('Not enough unassigned cash.'); return; } const remaining = tx.amount - (tx.paidAmount||0); const applied = Math.min(remaining, billValue); state.cashPool -= applied; tx.paidAmount = (tx.paidAmount||0) + applied; if(tx.paidAmount >= tx.amount - 1e-6){ state.archived.expenses += tx.amount; const idx = state.transactions.findIndex(t=>t.id===txId); if(idx!==-1) state.transactions.splice(idx,1); } save(); renderAll(); }
+
+    // Mock Plaid
+    const MOCK_MERCHANTS=['Amazon','Trader Joe\'s','Chevron','Target','Costco','Walmart','Shell','Local Coffee','Utilities','Lyft'];
+    function plaidMock(){ const n=Math.floor(Math.random()*4)+3; for(let i=0;i<n;i++){ const type=Math.random()<.5? 'expense':'deposit'; const amount=Math.round((Math.random()*90+10)*100)/100; const date=new Date(); date.setDate(date.getDate()-Math.floor(Math.random()*20)); state.transactions.push({ id:uid('tx'), date:date.toISOString().slice(0,10), merchant:MOCK_MERCHANTS[Math.floor(Math.random()*MOCK_MERCHANTS.length)], amount, type, paidAmount: type==='expense'?0:undefined }); } save(); renderAll(); }
+
+    // Export/Import/Reset
+    function download(filename, text){ const a=document.createElement('a'); a.href='data:text/json;charset=utf-8,'+encodeURIComponent(text); a.download=filename; a.click(); }
+    function exportData(){ download(`nvelopes-${new Date().toISOString().replace(/[:.]/g,'-')}.json`, JSON.stringify(state,null,2)); }
+    function importData(){ const inp=document.createElement('input'); inp.type='file'; inp.accept='application/json'; inp.onchange=()=>{ const f=inp.files?.[0]; if(!f) return; const r=new FileReader(); r.onload=()=>{ try{ state=JSON.parse(r.result); if(!state.archived) state.archived={deposits:0,expenses:0}; save(); renderAll(); }catch{ alert('Invalid file'); } }; r.readAsText(f); }; inp.click(); }
+    function resetData(){ if(!confirm('Reset demo and clear all data?')) return; state=structuredClone(DEFAULT_STATE); save(); renderAll(); }
+
+    // Tx form controls
+    function openTxForm(){ const wrap=$('#txFormWrap'); wrap.classList.add('open'); wrap.setAttribute('aria-hidden','false'); $('#txDate').value=todayISO(); $('#txMerchant').focus(); }
+    function closeTxForm(){ const wrap=$('#txFormWrap'); wrap.classList.remove('open'); wrap.setAttribute('aria-hidden','true'); if($('#txMerchant')) $('#txMerchant').value=''; if($('#txAmount')) $('#txAmount').value=''; }
+
+    // Events
+    $('#toggleEnvForm').addEventListener('click', ()=>{ const wrap=$('#envFormWrap'); wrap.classList.contains('open')? closeEnvForm() : openEnvForm(); });
+    $('#addEnvelopeConfirm').addEventListener('click', ()=> addEnvelope($('#newEnvName').value.trim(), Number($('#newEnvBudget').value||0)) );
+    $('#cancelEnvForm').addEventListener('click', closeEnvForm);
+
+    $('#toggleTxForm').addEventListener('click', ()=>{ const wrap=$('#txFormWrap'); wrap.classList.contains('open')? closeTxForm() : openTxForm(); });
+    $('#addTxConfirm').addEventListener('click', addTxFromForm);
+    $('#cancelTxForm').addEventListener('click', closeTxForm);
+
+    $('#plaidMock').addEventListener('click', plaidMock);
+    $('#exportBtn').addEventListener('click', exportData);
+    $('#importBtn').addEventListener('click', importData);
+    $('#resetBtn').addEventListener('click', resetData);
+
+    document.querySelector('#denomControls').addEventListener('click', e=>{ const btn=e.target.closest('button'); if(!btn) return; const d=btn.dataset.denom; if(d){ state.denom=Number(d); save(); renderPool(); return; } });
+    $('#add-cash').addEventListener('click', ()=>{ const n=Number(prompt('Add cash to Unassigned', '100'))||0; state.cashPool+=Math.max(0,n); save(); renderAll(); });
+    $('#withdraw-cash').addEventListener('click', ()=>{ const n=Number(prompt('Withdraw from Unassigned', '50'))||0; if(state.cashPool<n) return alert('Not enough unassigned cash'); state.cashPool-=n; save(); renderAll(); });
+
+    // Keyboard: ESC closes any open form
+    document.addEventListener('keydown', e=>{ if(e.key==='Escape'){ const txOpen=$('#txFormWrap').classList.contains('open'); const envOpen=$('#envFormWrap').classList.contains('open'); if(txOpen) closeTxForm(); if(envOpen) closeEnvForm(); }});
+
+    // Boot
+    renderAll();
+  </script>
+</body>
+</html>
