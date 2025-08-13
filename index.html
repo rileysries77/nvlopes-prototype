@@ -3,10 +3,11 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Nvelopes • Smaller Envelopes + Add Envelope On‑Demand</title>
+  <title>Nvelopes • R10</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <style>
     :root{ --primary:#80e27e; --on-primary:#032106; --surface:#0e1116; --surface-2:#141922; --surface-3:#10151c; --text:#e6ebf2; --muted:#aab4c3; --outline:#26303a; --danger:#ff6b6b; --radius:14px; --radius-lg:18px; --shadow-1:0 1px 2px rgba(0,0,0,.45), 0 2px 6px rgba(0,0,0,.35);} *{box-sizing:border-box}
     html,body{height:100%}
@@ -25,14 +26,15 @@
     .card{ background:var(--surface-2); border:1px solid var(--outline); border-radius:var(--radius-lg); box-shadow:var(--shadow-1); padding:14px; }
     .card h4{ margin:0 0 6px 0; font-size:12px; text-transform:uppercase; letter-spacing:.4px; color:var(--muted) }
     .value{ font-size:26px; font-weight:900 }
+    .subvalue{ margin-top:4px; font-size:12px; color:var(--muted) }
 
     .layout{ display:grid; grid-template-columns: 1fr 0.9fr 1fr; gap:16px; align-items:start; }
     .panel{ background:var(--surface-2); border:1px solid var(--outline); border-radius:var(--radius-lg); box-shadow:var(--shadow-1); padding:12px; display:flex; flex-direction:column; gap:12px; min-height:520px; }
     .panel h3{ margin:4px 0; font-size:16px }
 
-    /* ENVELOPES (paper style — smaller) */
+    /* ENVELOPES */
     .env-header{ display:flex; align-items:center; justify-content:space-between; gap:8px }
-    .env-actions{ display:flex; gap:8px }
+    .env-actions{ display:flex; gap:8px; flex-wrap:wrap }
     .env-form-wrap{ display:none }
     .env-form-wrap.open{ display:block; animation: drop .18s ease-out }
     @keyframes drop{ from{ transform: translateY(-4px); opacity:.0 } to{ transform: translateY(0); opacity:1 } }
@@ -40,6 +42,7 @@
     .env-form label{ display:block; font-size:12px; color:var(--muted); margin:0 0 4px }
 
     .env-list{ display:grid; gap:10px; overflow:auto; max-height:65vh; padding-right:4px }
+    .empty-env{ color:var(--muted); font-size:13px; border:1px dashed var(--outline); padding:12px; border-radius:12px; }
     .env{ position:relative; background:linear-gradient(180deg,#f7f1e4,#eee5d2); color:#2a2a2a; border:1px solid #d9ccb0; border-radius:10px; padding:12px 12px 10px 12px; box-shadow: 0 2px 4px rgba(0,0,0,.22), inset 0 1px 0 rgba(255,255,255,.6); cursor:grab; user-select:none; }
     .env:active{ cursor:grabbing }
     .env .stamp{ position:absolute; right:8px; top:8px; width:24px; height:24px; border-radius:6px; background:radial-gradient(circle at 30% 30%, #fff 0 30%, #ffe0f0 31% 100%); border:1px dashed #b88; box-shadow: inset 0 1px 0 rgba(255,255,255,.6); opacity:.9 }
@@ -106,6 +109,16 @@
     .tx .meta{ color:var(--muted); font-size:12px }
     .tx.dragover{ outline:2px dashed var(--primary); outline-offset:6px }
 
+    .helper{ color:var(--muted); font-size:12px; }
+
+    /* Modal */
+    .modal-backdrop{ position:fixed; inset:0; background:rgba(0,0,0,.55); display:none; align-items:center; justify-content:center; z-index:50 }
+    .modal-backdrop.open{ display:flex }
+    .modal{ width:min(520px,90vw); background:var(--surface-2); border:1px solid var(--outline); border-radius:16px; box-shadow:var(--shadow-1); padding:16px }
+    .modal h4{ margin:0 0 10px 0 }
+    .modal .row{ display:flex; gap:10px; align-items:flex-end; flex-wrap:wrap }
+    .modal .actions{ display:flex; gap:8px; justify-content:flex-end; margin-top:12px }
+
     @media (max-width: 1100px){ .layout{ grid-template-columns:1fr } .env-list,.tx-list{ max-height:none } .tray-combined{ position:static } .bill{ width:44vw; max-width:220px; height:72px } }
   </style>
 </head>
@@ -115,18 +128,19 @@
       <div class="logo">N</div>
       <div class="brand">
         <span class="title">Nvelopes</span>
-        <span class="sub">Smaller envelopes + on‑demand add forms</span>
+        <span class="sub">R6 — Envs Export/Import • Excel/CSV import • No defaults • Set Bank</span>
       </div>
       <div class="tray">
         <button id="exportBtn" class="btn btn-tonal btn-sm">Export</button>
         <button id="importBtn" class="btn btn-sm">Import</button>
+        <button id="setBankBtn" class="btn btn-sm">Set Bank</button>
         <button id="resetBtn" class="btn btn-danger btn-sm">Reset</button>
       </div>
     </section>
 
     <section class="stats">
       <div class="card"><h4>Envelope Balance</h4><div id="stat-env-balance" class="value">$0.00</div></div>
-      <div class="card"><h4>Bank Balance</h4><div id="stat-bank-balance" class="value">$0.00</div></div>
+      <div class="card" id="bankCard" style="cursor:pointer"><h4>Bank Balance</h4><div id="stat-bank-balance" class="value">$0.00</div><div class="subvalue">Starting: <span id="stat-bank-start">$0.00</span></div></div>
     </section>
 
     <section class="layout">
@@ -136,6 +150,8 @@
           <h3>Envelopes</h3>
           <div class="env-actions">
             <button id="toggleEnvForm" class="btn btn-primary btn-sm">Add</button>
+            <button id="exportEnvsBtn" class="btn btn-sm" title="Export only envelopes (JSON)">Export Envs</button>
+            <button id="importEnvsBtn" class="btn btn-sm" title="Import only envelopes (JSON)">Import Envs</button>
           </div>
         </div>
 
@@ -152,6 +168,7 @@
         </div>
 
         <div class="env-list" id="envList"></div>
+        <div id="envEmpty" class="empty-env" style="display:none">No envelopes yet. Click <b>Add</b> to create your first envelope.</div>
       </div>
 
       <!-- MONEY TABLE -->
@@ -164,7 +181,6 @@
           </div>
         </div>
 
-        <!-- COMBINED TRAY: Drop + Denoms + Bills in one section -->
         <div id="billTray" class="tray-combined" aria-label="Money tray. Drop deposits or envelopes here and pick bill denomination.">
           <div class="tray-row">
             <div class="tray-instructions"><span>Drop</span><span class="tag">Deposits</span><span>or</span><span class="tag">Envelopes</span><span>here →</span></div>
@@ -175,8 +191,8 @@
               <button class="btn btn-sm" data-denom="20">$20</button>
               <button class="btn btn-sm" data-denom="50">$50</button>
               <button class="btn btn-sm" data-denom="100">$100</button>
-              <button id="add-cash" class="btn btn-tonal btn-sm">Add Cash</button>
-              <button id="withdraw-cash" class="btn btn-sm">Withdraw</button>
+              <button id="create-cash" class="btn btn-tonal btn-sm">Create Cash</button>
+              <button id="delete-cash" class="btn btn-sm">Delete Cash</button>
             </div>
           </div>
           <div id="bills" class="bills" aria-live="polite"></div>
@@ -191,11 +207,11 @@
           <h3>Transactions</h3>
           <div class="tx-actions">
             <button id="toggleTxForm" class="btn btn-primary btn-sm">Add Tx</button>
-            <button id="plaidMock" class="btn btn-tonal btn-sm">Mock Import</button>
+            <button id="excelImportBtn" class="btn btn-tonal btn-sm">Import Excel/CSV</button>
           </div>
         </div>
+        <div class="helper">Accepted columns (case-insensitive). Excel first sheet or CSV: <b>Date</b>, <b>Merchant</b>, <b>Amount</b>, <b>Type</b> ("expense" or "deposit"). If Type is missing, sign of Amount is used (negative = expense).</div>
 
-        <!-- Hidden until Add Tx is clicked -->
         <div id="txFormWrap" class="tx-form-wrap" aria-hidden="true">
           <div class="tx-form">
             <div><label>Date</label><input id="txDate" class="input" type="date" /></div>
@@ -212,6 +228,27 @@
         <div class="tx-list" id="txList"></div>
       </div>
     </section>
+
+    <!-- Hidden file inputs -->
+    <input id="excelFile" type="file" accept=".xlsx,.xls,.csv" style="display:none" />
+    <input id="envImportFile" type="file" accept="application/json" style="display:none" />
+  </div>
+
+  <!-- Set Bank Modal -->
+  <div id="bankModalBackdrop" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="bankModalTitle">
+    <div class="modal">
+      <h4 id="bankModalTitle">Set Starting Bank Balance</h4>
+      <div class="row">
+        <div style="flex:1">
+          <label for="bankStartInput" style="display:block; font-size:12px; color:var(--muted); margin:0 0 4px">Amount (USD)</label>
+          <input id="bankStartInput" class="input" type="number" inputmode="decimal" step="0.01" min="0" placeholder="0.00" />
+        </div>
+      </div>
+      <div class="actions">
+        <button id="bankCancel" class="btn">Cancel</button>
+        <button id="bankSave" class="btn btn-primary">Save</button>
+      </div>
+    </div>
   </div>
 
   <script>
@@ -223,49 +260,39 @@
     const uid = (p='id') => `${p}_${Math.random().toString(36).slice(2,9)}`;
 
     // ===== State =====
-    const DEFAULT_STATE = {
-      bankStarting: 3390.37,
-      cashPool: 300,
-      denom: 20,
-      archived: { deposits: 0, expenses: 0 },
-      envelopes: [
-        { id: uid('env'), name:'Rent Payment', budget: 500, balance:100 },
-        { id: uid('env'), name:'Gas',          budget:  60, balance:200 },
-        { id: uid('env'), name:'Cell Phone',   budget: 200, balance:850.32 },
-        { id: uid('env'), name:'Test100',      budget: 100, balance:761.38 },
-        { id: uid('env'), name:'Fun',          budget: 200, balance:200 },
-        { id: uid('env'), name:'Electric',     budget: 200, balance:682.41 },
-        { id: uid('env'), name:'Mortgage',     budget:3000, balance:198.78 },
-      ],
-      transactions: [
-        { id: uid('tx'), date: todayISO(), merchant:'Monthly Maintenance Fee', amount: 6.95, type:'expense', paidAmount:0 },
-        { id: uid('tx'), date: todayISO(), merchant:'Zelle Instant Pmt to Riley Ries', amount:300.00, type:'deposit' },
-        { id: uid('tx'), date: todayISO(), merchant:'Mobile Banking Transfer Withdrawal', amount:100.00, type:'expense', paidAmount:0 },
-      ],
-    };
+    const DEFAULT_STATE = { bankStarting:0, cashPool:0, denom:20, archived:{deposits:0,expenses:0}, envelopes:[], transactions:[] };
+    const STORAGE_KEY = 'nvelopes_r6_storage';
 
-    const STORAGE_KEY = 'nvelopes_smaller_env_on_demand_v1';
     let state = load();
     function load(){
-      try{ const raw = localStorage.getItem(STORAGE_KEY); const s = raw? JSON.parse(raw) : structuredClone(DEFAULT_STATE); if(!s.archived) s.archived={deposits:0,expenses:0}; return s; }catch{ return structuredClone(DEFAULT_STATE) }
+      try{
+        const raw = localStorage.getItem(STORAGE_KEY);
+        const s = raw? JSON.parse(raw) : structuredClone(DEFAULT_STATE);
+        if(!s.archived) s.archived={deposits:0,expenses:0};
+        if(typeof s.bankStarting !== 'number') s.bankStarting = 0;
+        if(!Array.isArray(s.envelopes)) s.envelopes = [];
+        return s;
+      }catch{ return structuredClone(DEFAULT_STATE) }
     }
     function save(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
 
     // ===== Derived =====
     const envTotal = () => state.envelopes.reduce((sum,e)=> sum + e.balance, 0);
     const signed = t => t.type==='deposit' ? t.amount : -t.amount;
-    const bankTotal = () => state.bankStarting + state.archived.deposits - state.archived.expenses + state.transactions.reduce((s,t)=> s + signed(t), 0);
+    // Recompute bank every render so deletes/toggles reflect immediately
+    // Bank reflects ONLY satisfied transactions (archived), not pending/imported ones
+    const bankTotal = () => state.bankStarting + state.archived.deposits - state.archived.expenses;
 
     // ===== Render =====
-    function renderAll(){ renderTop(); renderEnvList(); renderTxForm(); renderTxList(); renderPool(); setupDrops(); }
-    function renderTop(){ $('#stat-env-balance').textContent = fmt(envTotal()); $('#stat-bank-balance').textContent = fmt(bankTotal()); $('#pool-amount').textContent = fmt(state.cashPool); }
+    function renderAll(){ renderTop(); renderEnvList(); renderTxForm(); renderTxList(); renderPool(); setupDrops(); toggleEnvEmpty(); }
+    function renderTop(){ $('#stat-env-balance').textContent = fmt(envTotal()); $('#stat-bank-balance').textContent = fmt(bankTotal()); $('#pool-amount').textContent = fmt(state.cashPool); const sEl=$('#stat-bank-start'); if(sEl) sEl.textContent=fmt(state.bankStarting); }
 
     // Envelopes
     function renderEnvList(){ const list=$('#envList'); list.innerHTML=''; state.envelopes.forEach(env=> list.appendChild(renderEnv(env))); }
+    function toggleEnvEmpty(){ const has = state.envelopes.length>0; $('#envEmpty').style.display = has? 'none':'block'; }
     function renderEnv(env){
       const el = document.createElement('div'); el.className='env'; el.setAttribute('aria-label', `${env.name}, ${fmt(env.balance)} of ${fmt(env.budget)}`);
-      el.draggable = true; // envelope → money tray
-      el.dataset.dragtype = 'env'; el.dataset.envelopeId = env.id;
+      el.draggable = true; el.dataset.dragtype = 'env'; el.dataset.envelopeId = env.id;
       el.innerHTML = `
         <div class="stamp" aria-hidden="true"></div>
         <div class="window">
@@ -275,10 +302,13 @@
         <div class="tape"><div class="bar" style="width:${clamp((env.balance/env.budget)*100,0,100)}%"></div></div>
       `;
       el.addEventListener('dragstart', e=>{ e.dataTransfer.setData('text/plain', JSON.stringify({type:'env', envelopeId:env.id})); });
-      // accept bills to add funds
       el.addEventListener('dragover', e=>{ e.preventDefault(); el.classList.add('dragover'); });
       el.addEventListener('dragleave', ()=> el.classList.remove('dragover'));
-      el.addEventListener('drop', e=>{ e.preventDefault(); el.classList.remove('dragover'); const p=parseDragData(e); if(p?.type==='bill'){ allocateToEnvelope(env.id, p.value); }});
+      el.addEventListener('drop', e=>{ e.preventDefault(); el.classList.remove('dragover'); const p=parseDragData(e); if (p?.type === 'bill') {
+  allocateToEnvelope(env.id, p.value);
+} else if (p?.type === 'tx') {
+  assignDepositToEnvelope(p.txId, env.id);
+}});
       return el;
     }
 
@@ -296,7 +326,6 @@
       el.innerHTML = `<div><div><strong>${sign}${fmt(tx.amount)}</strong> · ${tx.merchant||'(No merchant)'}<span class="meta">${paidText}</span></div><div class="meta">${new Date(tx.date).toLocaleDateString()} · id:${tx.id.slice(-5)}</div></div><div style="display:flex; gap:6px;"><button class="btn btn-sm" data-act="delete">Delete</button></div>`;
       el.draggable = (tx.type==='deposit');
       if(tx.type==='deposit') el.addEventListener('dragstart', e=> e.dataTransfer.setData('text/plain', JSON.stringify({type:'tx', txId:tx.id})) );
-      // expenses accept bills
       el.addEventListener('dragover', e=>{ if(tx.type==='expense'){ e.preventDefault(); el.classList.add('dragover'); }});
       el.addEventListener('dragleave', ()=> el.classList.remove('dragover'));
       el.addEventListener('drop', e=>{ e.preventDefault(); el.classList.remove('dragover'); const p=parseDragData(e); if(p?.type==='bill' && tx.type==='expense'){ payTransactionWithBill(tx.id, p.value); }});
@@ -304,7 +333,7 @@
       return el;
     }
 
-    // Money Tray (bills + controls)
+    // Money Tray
     function renderPool(){ $('#pool-amount').textContent = fmt(state.cashPool); const b=$('#bills'); b.innerHTML=''; const count=Math.floor(state.cashPool/state.denom); const max=20; for(let i=0;i<Math.min(count,max);i++) b.appendChild(makeBill(state.denom)); if(count>max){ const s=document.createElement('span'); s.className='more-count'; s.textContent = `+${count-max} more`; b.appendChild(s);} }
     function makeBill(value){ const el=document.createElement('div'); const cls=`bill bill-${value}`; el.className=cls; el.draggable=true; el.dataset.value=String(value); const serial=`NV${String(Math.floor(Math.random()*1e8)).padStart(8,'0')}`; el.innerHTML=`<span class="note-corner tl">$${value}</span><span class="note-center">$${value}</span><span class="note-corner br">$${value}</span><span class="seal">NV</span><span class="serial">${serial}</span><span class="ribbon"></span>`; el.addEventListener('dragstart', e=> e.dataTransfer.setData('text/plain', JSON.stringify({type:'bill', value})) ); return el; }
 
@@ -326,7 +355,20 @@
     function moveEnvelopeToCash(envelopeId){ const env = state.envelopes.find(x=> x.id===envelopeId); if(!env) return; if(env.balance<=0) return; state.cashPool += env.balance; env.balance = 0; save(); renderAll(); }
 
     function addTxFromForm(){ const date=$('#txDate').value||todayISO(); const merchant=$('#txMerchant').value.trim(); const type=$('#txType').value; const amount=Number($('#txAmount').value||0); if(amount<=0) return alert('Amount must be > 0'); const tx={ id:uid('tx'), date, merchant, amount, type, paidAmount: type==='expense'? 0: undefined }; state.transactions.push(tx); save(); renderAll(); closeTxForm(); }
-    function deleteTx(id){ const i=state.transactions.findIndex(t=>t.id===id); if(i<0) return; state.transactions.splice(i,1); save(); renderAll(); }
+    function deleteTx(id){
+      const i=state.transactions.findIndex(t=>t.id===id);
+      if(i<0) return;
+      // Remove the transaction
+      state.transactions.splice(i,1);
+      // Save and re-render — bank balance is derived from state and will update immediately
+      save();
+      renderAll();
+      // subtle flash on the bank card to indicate update
+      const card = document.getElementById('bankCard');
+      if(card){
+        card.animate([{boxShadow:'0 0 0 0 rgba(128,226,126,0.0)'},{boxShadow:'0 0 0 6px rgba(128,226,126,0.15)'},{boxShadow:'0 0 0 0 rgba(128,226,126,0.0)'}],{duration:450, easing:'ease-out'});
+      }
+    }
 
     // Drag helpers
     function parseDragData(e){ try{ return JSON.parse(e.dataTransfer.getData('text/plain')); }catch{ return null; } }
@@ -335,43 +377,179 @@
     function convertDepositToCash(txId){ const tx = state.transactions.find(t=>t.id===txId); if(!tx) return; if(tx.type!=='deposit'){ alert('Only deposit (positive) transactions can be converted here.'); return; } state.cashPool += tx.amount; state.archived.deposits += tx.amount; const i = state.transactions.findIndex(t=>t.id===txId); if(i>=0) state.transactions.splice(i,1); save(); renderAll(); }
     function payTransactionWithBill(txId, billValue){ const tx = state.transactions.find(t=>t.id===txId); if(!tx || tx.type!=='expense') return; if(state.cashPool < billValue) { alert('Not enough unassigned cash.'); return; } const remaining = tx.amount - (tx.paidAmount||0); const applied = Math.min(remaining, billValue); state.cashPool -= applied; tx.paidAmount = (tx.paidAmount||0) + applied; if(tx.paidAmount >= tx.amount - 1e-6){ state.archived.expenses += tx.amount; const idx = state.transactions.findIndex(t=>t.id===txId); if(idx!==-1) state.transactions.splice(idx,1); } save(); renderAll(); }
 
-    // Mock Plaid
-    const MOCK_MERCHANTS=['Amazon','Trader Joe\'s','Chevron','Target','Costco','Walmart','Shell','Local Coffee','Utilities','Lyft'];
-    function plaidMock(){ const n=Math.floor(Math.random()*4)+3; for(let i=0;i<n;i++){ const type=Math.random()<.5? 'expense':'deposit'; const amount=Math.round((Math.random()*90+10)*100)/100; const date=new Date(); date.setDate(date.getDate()-Math.floor(Math.random()*20)); state.transactions.push({ id:uid('tx'), date:date.toISOString().slice(0,10), merchant:MOCK_MERCHANTS[Math.floor(Math.random()*MOCK_MERCHANTS.length)], amount, type, paidAmount: type==='expense'?0:undefined }); } save(); renderAll(); }
-
-    // Export/Import/Reset
-    function download(filename, text){ const a=document.createElement('a'); a.href='data:text/json;charset=utf-8,'+encodeURIComponent(text); a.download=filename; a.click(); }
+    // ===== App State Export/Import =====
+    function download(filename, text){
+      const blob = new Blob([text], {type: 'application/json'});
+      const url = URL.createObjectURL(blob);
+      const a=document.createElement('a');
+      a.href=url; a.download=filename; a.style.display='none';
+      document.body.appendChild(a); a.click();
+      setTimeout(()=>{ URL.revokeObjectURL(url); a.remove(); }, 0);
+    }
     function exportData(){ download(`nvelopes-${new Date().toISOString().replace(/[:.]/g,'-')}.json`, JSON.stringify(state,null,2)); }
-    function importData(){ const inp=document.createElement('input'); inp.type='file'; inp.accept='application/json'; inp.onchange=()=>{ const f=inp.files?.[0]; if(!f) return; const r=new FileReader(); r.onload=()=>{ try{ state=JSON.parse(r.result); if(!state.archived) state.archived={deposits:0,expenses:0}; save(); renderAll(); }catch{ alert('Invalid file'); } }; r.readAsText(f); }; inp.click(); }
-    function resetData(){ if(!confirm('Reset demo and clear all data?')) return; state=structuredClone(DEFAULT_STATE); save(); renderAll(); }
+    function importData(){ const inp=document.createElement('input'); inp.type='file'; inp.accept='application/json'; inp.onchange=()=>{ const f=inp.files?.[0]; if(!f) return; const r=new FileReader(); r.onload=()=>{ try{ state=JSON.parse(r.result); if(!state.archived) state.archived={deposits:0,expenses:0}; if(typeof state.bankStarting!=='number') state.bankStarting=0; if(!Array.isArray(state.envelopes)) state.envelopes=[]; save(); renderAll(); }catch{ alert('Invalid file'); } }; r.readAsText(f); }; inp.click(); }
+
+    // ===== Envelope-only Export/Import =====
+    function exportEnvelopes(){
+      try{
+        const payload = {
+          version: 'r6',
+          exportedAt: new Date().toISOString(),
+          envelopes: state.envelopes.map(({id,name,budget,balance})=>({id,name,budget,balance}))
+        };
+        download(`nvelopes-envelopes-${new Date().toISOString().replace(/[:.]/g,'-')}.json`, JSON.stringify(payload,null,2));
+      }catch(err){ console.error(err); alert('Could not export envelopes.'); }
+    }
+
+    function importEnvelopes(){
+      const fileInput = $('#envImportFile');
+      fileInput.onchange = () => {
+        const f = fileInput.files?.[0]; fileInput.value=''; if(!f) return;
+        const r = new FileReader();
+        r.onload = () => {
+          try{
+            let data = JSON.parse(r.result);
+            let incoming = Array.isArray(data)? data : Array.isArray(data?.envelopes)? data.envelopes : null;
+            if(!incoming) throw new Error('File must be an array of envelopes or { envelopes: [...] }');
+            incoming = incoming.map(e=>({ id: e.id && typeof e.id==='string' ? e.id : uid('env'), name: String(e.name||'').trim() || 'Untitled', budget: Math.max(0, Number(e.budget)||0), balance: Math.max(0, Number(e.balance)||0) }));
+            const replace = confirm('Replace existing envelopes?\nOK = Replace, Cancel = Merge');
+            if(replace){ state.envelopes = incoming; }
+            else{
+              const byName = new Map(state.envelopes.map(e=> [e.name.toLowerCase(), e]));
+              for(const inc of incoming){ const key=inc.name.toLowerCase(); if(byName.has(key)){ const cur=byName.get(key); cur.budget=inc.budget; cur.balance=inc.balance; } else { state.envelopes.push(inc); } }
+            }
+            save(); renderAll(); alert(`Imported ${incoming.length} envelope(s).`);
+          }catch(err){ console.error(err); alert('Invalid envelope file: '+ err.message); }
+        };
+        r.readAsText(f);
+      };
+      fileInput.click();
+    }
+
+    // ===== Bank Modal =====
+    function openBankModal(){ const bd=$('#bankModalBackdrop'); const input=$('#bankStartInput'); if(!bd||!input) return; input.value = String(state.bankStarting||0); bd.classList.add('open'); setTimeout(()=> input.focus(), 0); }
+    function closeBankModal(){ const bd=$('#bankModalBackdrop'); if(bd) bd.classList.remove('open'); }
+    function saveBankStarting(){ const v = Number($('#bankStartInput').value); if(!Number.isFinite(v) || v < 0){ alert('Please enter a valid non-negative number.'); return; } state.bankStarting = Math.round(v*100)/100; save(); closeBankModal(); renderAll(); }
 
     // Tx form controls
     function openTxForm(){ const wrap=$('#txFormWrap'); wrap.classList.add('open'); wrap.setAttribute('aria-hidden','false'); $('#txDate').value=todayISO(); $('#txMerchant').focus(); }
-    function closeTxForm(){ const wrap=$('#txFormWrap'); wrap.classList.remove('open'); wrap.setAttribute('aria-hidden','true'); if($('#txMerchant')) $('#txMerchant').value=''; if($('#txAmount')) $('#txAmount').value=''; }
+    function closeTxForm(){ const wrap=$('#txFormWrap'); wrap.classList.remove('open'); wrap.setAttribute('aria-hidden','true'); if($('#txDate')) $('#txDate').value=''; if($('#txMerchant')) $('#txMerchant').value=''; if($('#txAmount')) $('#txAmount').value=''; }
+
+    // ===== Excel/CSV Import =====
+    const ACCEPTED_TYPES = ['xlsx','xls','csv'];
+    const COL_ALIASES = { date: ['date','posted date','transaction date','time'], merchant: ['merchant','description','name','memo','payee'], amount: ['amount','amt','value','total'], type: ['type','txn type','transaction type'] };
+    function normalizeHeader(h){ return String(h||'').trim().toLowerCase(); }
+    function findCol(map, key){ const wanted = COL_ALIASES[key]; for(const k of Object.keys(map)){ if(wanted.includes(k)) return map[k]; } return null; }
+    function parseExcelDate(v){ if(v == null || v === '') return todayISO(); if(v instanceof Date) return v.toISOString().slice(0,10); if(typeof v === 'number'){ const epoch = new Date(Date.UTC(1899,11,30)); const ms = v * 86400000; const d = new Date(epoch.getTime()+ms); return d.toISOString().slice(0,10);} const t = String(v).trim(); const tryDirect = new Date(t); if(!isNaN(tryDirect)) return tryDirect.toISOString().slice(0,10); return todayISO(); }
+    function coerceAmount(a){ if(a==null || a==='') return NaN; let s = String(a).replace(/[$,\s]/g,''); const num = Number(s); return Number.isFinite(num)? num : NaN; }
+    function decideType(typeCell, amount){ const t = String(typeCell||'').trim().toLowerCase(); if(t === 'expense' || t === 'debit' || t === 'withdrawal' || t === 'payment') return 'expense'; if(t === 'deposit' || t === 'credit' || t === 'refund') return 'deposit'; if(Number.isFinite(amount)) return amount < 0 ? 'expense' : 'deposit'; return 'expense'; }
+    async function importExcelOrCsv(file){ const ext = file.name.split('.').pop().toLowerCase(); if(!ACCEPTED_TYPES.includes(ext)) { alert('Please select an .xlsx, .xls, or .csv file.'); return; } if(ext === 'csv') { const text = await file.text(); return importCsv(text);} const data = await file.arrayBuffer(); const wb = XLSX.read(data, { type: 'array' }); const firstSheet = wb.Sheets[0 ? wb.SheetNames[0] : 0]; const rows = XLSX.utils.sheet_to_json(firstSheet, { header:1, raw:true }); return importRows(rows); }
+    function importCsv(text){ const rows = text.split(/\r?\n/).map(r=> r.split(/,(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)/).map(c=> c.replace(/^\"|\"$/g,''))); return importRows(rows); }
+    function importRows(rows){ if(!rows || !rows.length) { alert('No rows found.'); return; } const header = rows[0].map(normalizeHeader); const headerMap = {}; header.forEach((h,i)=> headerMap[h]=i); const idx = { date: findCol(headerMap,'date'), merchant: findCol(headerMap,'merchant'), amount: findCol(headerMap,'amount'), type: findCol(headerMap,'type') }; if(idx.amount == null) { alert('Missing Amount column. Include a column named Amount/Value/Total.'); return; } let added = 0, skipped = 0; for(let r=1;r<rows.length;r++){ const row = rows[r]; if(!row || row.every(c=> String(c||'').trim()==='')) continue; const amountRaw = idx.amount!=null ? row[idx.amount] : null; const amountVal = coerceAmount(amountRaw); if(!Number.isFinite(amountVal)) { skipped++; continue; } const typeCell = idx.type!=null ? row[idx.type] : ''; const txnType = decideType(typeCell, amountVal); const merchant = idx.merchant!=null ? String(row[idx.merchant]||'').trim() : ''; const dateCell = idx.date!=null ? row[idx.date] : null; const date = parseExcelDate(dateCell); const absAmount = Math.abs(amountVal); const tx = { id: uid('tx'), date, merchant, amount: absAmount, type: txnType, paidAmount: txnType==='expense' ? 0 : undefined }; state.transactions.push(tx); added++; } save(); renderAll(); alert(`Imported ${added} transaction(s).${skipped?` Skipped ${skipped} row(s).`:''}`); }
 
     // Events
     $('#toggleEnvForm').addEventListener('click', ()=>{ const wrap=$('#envFormWrap'); wrap.classList.contains('open')? closeEnvForm() : openEnvForm(); });
     $('#addEnvelopeConfirm').addEventListener('click', ()=> addEnvelope($('#newEnvName').value.trim(), Number($('#newEnvBudget').value||0)) );
     $('#cancelEnvForm').addEventListener('click', closeEnvForm);
 
+    $('#exportEnvsBtn').addEventListener('click', exportEnvelopes);
+    $('#importEnvsBtn').addEventListener('click', importEnvelopes);
+
     $('#toggleTxForm').addEventListener('click', ()=>{ const wrap=$('#txFormWrap'); wrap.classList.contains('open')? closeTxForm() : openTxForm(); });
     $('#addTxConfirm').addEventListener('click', addTxFromForm);
     $('#cancelTxForm').addEventListener('click', closeTxForm);
 
-    $('#plaidMock').addEventListener('click', plaidMock);
+    if($('#plaidMock')) $('#plaidMock').addEventListener('click', plaidMock);
     $('#exportBtn').addEventListener('click', exportData);
     $('#importBtn').addEventListener('click', importData);
-    $('#resetBtn').addEventListener('click', resetData);
+    $('#resetBtn').addEventListener('click', ()=>{ if(!confirm('Reset demo and clear all data?')) return; state=structuredClone(DEFAULT_STATE); save(); renderAll(); });
+
+    $('#setBankBtn').addEventListener('click', openBankModal);
+    $('#bankCard').addEventListener('click', openBankModal);
+    $('#bankCancel').addEventListener('click', closeBankModal);
+    $('#bankSave').addEventListener('click', saveBankStarting);
 
     document.querySelector('#denomControls').addEventListener('click', e=>{ const btn=e.target.closest('button'); if(!btn) return; const d=btn.dataset.denom; if(d){ state.denom=Number(d); save(); renderPool(); return; } });
-    $('#add-cash').addEventListener('click', ()=>{ const n=Number(prompt('Add cash to Unassigned', '100'))||0; state.cashPool+=Math.max(0,n); save(); renderAll(); });
-    $('#withdraw-cash').addEventListener('click', ()=>{ const n=Number(prompt('Withdraw from Unassigned', '50'))||0; if(state.cashPool<n) return alert('Not enough unassigned cash'); state.cashPool-=n; save(); renderAll(); });
+    if($('#create-cash')) $('#create-cash').addEventListener('click', ()=>{ const n=Number(prompt('Create cash in Unassigned', '100'))||0; state.cashPool+=Math.max(0,n); save(); renderAll(); });
+    if($('#delete-cash')) $('#delete-cash').addEventListener('click', ()=>{ const n=Number(prompt('Delete cash from Unassigned', '50'))||0; if(state.cashPool<n) return alert('Not enough unassigned cash'); state.cashPool-=n; save(); renderAll(); });
 
-    // Keyboard: ESC closes any open form
-    document.addEventListener('keydown', e=>{ if(e.key==='Escape'){ const txOpen=$('#txFormWrap').classList.contains('open'); const envOpen=$('#envFormWrap').classList.contains('open'); if(txOpen) closeTxForm(); if(envOpen) closeEnvForm(); }});
+    $('#excelImportBtn').addEventListener('click', ()=> $('#excelFile').click());
+    $('#excelFile').addEventListener('change', async (e)=>{ const file=e.target.files?.[0]; if(!file) return; await importExcelOrCsv(file); e.target.value = ''; });
+
+    document.addEventListener('keydown', e=>{ if(e.key==='Escape'){ const bd=$('#bankModalBackdrop'); if(bd && bd.classList.contains('open')) closeBankModal(); const txOpen=$('#txFormWrap').classList.contains('open'); const envOpen=$('#envFormWrap').classList.contains('open'); if(txOpen) closeTxForm(); if(envOpen) closeEnvForm(); }});
+
+    // Mock Plaid
+    const MOCK_MERCHANTS=['Amazon','Trader Joe\'s','Chevron','Target','Costco','Walmart','Shell','Local Coffee','Utilities','Lyft'];
+    function plaidMock(){ const n=Math.floor(Math.random()*4)+3; for(let i=0;i<n;i++){ const type=Math.random()<.5? 'expense':'deposit'; const amount=Math.round((Math.random()*90+10)*100)/100; const date=new Date(); date.setDate(date.getDate()-Math.floor(Math.random()*20)); state.transactions.push({ id:uid('tx'), date:date.toISOString().slice(0,10), merchant:MOCK_MERCHANTS[Math.floor(Math.random()*MOCK_MERCHANTS.length)], amount, type, paidAmount: type==='expense'?0:undefined }); } save(); renderAll(); }
 
     // Boot
     renderAll();
   </script>
 </body>
 </html>
+
+<script>
+// Add function to pay a transaction from an envelope directly
+function payTransactionWithEnvelope(txId, envId){
+  const tx = state.transactions.find(t => t.id === txId);
+  const env = state.envelopes.find(e => e.id === envId);
+  if(!tx || tx.type !== 'expense') return;
+  if(!env || env.balance <= 0) return alert('Envelope is empty');
+  const remaining = tx.amount - (tx.paidAmount || 0);
+  const payment = Math.min(remaining, env.balance);
+  env.balance -= payment;
+  tx.paidAmount = (tx.paidAmount || 0) + payment;
+  if(tx.paidAmount >= tx.amount - 0.0001){
+    state.archived.expenses += tx.amount;
+    state.transactions = state.transactions.filter(t => t.id !== txId);
+  }
+  save();
+  renderAll();
+}
+
+// Modify transaction rendering to accept envelope drops
+function renderTx(tx){
+  const el = document.createElement('div');
+  el.className = 'tx';
+  const sign = tx.type === 'expense' ? '-' : '+';
+  const paidText = tx.type === 'expense' ? ` · paid ${fmt(tx.paidAmount || 0)} / ${fmt(tx.amount)}` : '';
+  el.innerHTML = `<div><div><strong>${sign}${fmt(tx.amount)}</strong> · ${tx.merchant || '(No merchant)'}<span class="meta">${paidText}</span></div><div class="meta">${new Date(tx.date).toLocaleDateString()} · id:${tx.id.slice(-5)}</div></div><div style="display:flex; gap:6px;"><button class="btn btn-sm" data-act="delete">Delete</button></div>`;
+
+  if(tx.type === 'deposit') {
+    el.draggable = true;
+    el.addEventListener('dragstart', e => e.dataTransfer.setData('text/plain', JSON.stringify({type:'tx', txId:tx.id})));
+  } else if(tx.type === 'expense') {
+    el.addEventListener('dragover', e => { e.preventDefault(); el.classList.add('dragover'); });
+    el.addEventListener('dragleave', () => el.classList.remove('dragover'));
+    el.addEventListener('drop', e => {
+      e.preventDefault();
+      el.classList.remove('dragover');
+      const p = parseDragData(e);
+      if(!p) return;
+      if(p.type === 'bill') {
+        payTransactionWithBill(tx.id, p.value);
+      } else if(p.type === 'env') {
+        payTransactionWithEnvelope(tx.id, p.envelopeId);
+      }
+    });
+  }
+
+  el.querySelector('[data-act="delete"]').addEventListener('click', () => deleteTx(tx.id));
+  return el;
+}
+</script>
+
+
+<script>
+// NEW: assign a deposit directly to an envelope (bypasses cashPool)
+function assignDepositToEnvelope(txId, envId){
+  const tx = state.transactions.find(t => t.id === txId);
+  const env = state.envelopes.find(e => e.id === envId);
+  if(!tx || tx.type !== 'deposit' || !env) return;
+  env.balance += tx.amount;                 // fund envelope
+  state.archived.deposits += tx.amount;     // mark as satisfied for bank math
+  state.transactions = state.transactions.filter(t => t.id !== txId); // remove tx
+  save(); renderAll();
+}
+</script>
+
