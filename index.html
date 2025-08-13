@@ -83,6 +83,9 @@
       repeating-linear-gradient(90deg, rgba(255,255,255,.06), rgba(255,255,255,.06) 1px, transparent 1px, transparent 4px);
       pointer-events:none; mix-blend-mode:overlay; }
     .bill::after{ content:""; position:absolute; inset:0; background:repeating-conic-gradient(from 0deg, rgba(255,255,255,.04) 0 10deg, transparent 10deg 20deg); opacity:.5; pointer-events:none; mix-blend-mode:overlay }
+    
+    .bill-1  { background:linear-gradient(180deg,#1f2f1f,#161f16); border-color:#2b3b2b; color:#e8f5e9; }
+    .bill-1 .seal{ background:#2e462e; color:#e8f5e9; }
     .bill-5  { background:linear-gradient(180deg,#2a2335,#201a2b); border-color:#3d3350; color:#e9e0ff }
     .bill-5 .seal{ background:#473761; color:#f2eaff }
     .bill-10 { background:linear-gradient(180deg,#3a2a18,#2a1e12); border-color:#533a22; color:#ffe7c7 }
@@ -186,7 +189,8 @@
             <div class="tray-instructions"><span>Drop</span><span class="tag">Deposits</span><span>or</span><span class="tag">Envelopes</span><span>here →</span></div>
             <div id="denomControls">
               <span style="color:var(--muted); font-size:12px">Denominations:</span>
-              <button class="btn btn-sm" data-denom="5">$5</button>
+              <button class="btn btn-sm" data-denom="1">$1</button>
+	      <button class="btn btn-sm" data-denom="5">$5</button>
               <button class="btn btn-sm" data-denom="10">$10</button>
               <button class="btn btn-sm" data-denom="20">$20</button>
               <button class="btn btn-sm" data-denom="50">$50</button>
