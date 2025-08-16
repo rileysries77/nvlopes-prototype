@@ -1,650 +1,857 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Nvelopes • R10</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-  <style>
-    :root{ --primary:#80e27e; --on-primary:#032106; --surface:#0e1116; --surface-2:#141922; --surface-3:#10151c; --text:#e6ebf2; --muted:#aab4c3; --outline:#26303a; --danger:#ff6b6b; --radius:14px; --radius-lg:18px; --shadow-1:0 1px 2px rgba(0,0,0,.45), 0 2px 6px rgba(0,0,0,.35);} *{box-sizing:border-box}
-    html,body{height:100%}
-    body{margin:0; font-family:Roboto, system-ui, -apple-system, Segoe UI, Helvetica, Arial; color:var(--text); background:linear-gradient(180deg,#0b0d11 0%, #0a0c0f 50%, #080a0d 100%);}  
-    .app{max-width:1280px; margin:0 auto; padding:16px; display:grid; gap:16px; grid-template-rows:auto auto 1fr; min-height:100dvh}
-    .appbar{ display:flex; align-items:center; gap:12px; padding:12px 16px; background:var(--surface-2); border:1px solid var(--outline); border-radius:var(--radius-lg); box-shadow:var(--shadow-1); }
-    .logo{ width:40px; height:40px; border-radius:12px; display:grid; place-items:center; font-weight:900; background:linear-gradient(135deg,#7bd88f,#6cb6ff); color:#041e0b; }
-    .brand{ display:grid; } .brand .title{ font-weight:900; } .brand .sub{ color:var(--muted); font-size:12px; }
-    .tray{ margin-left:auto; display:flex; gap:8px; }
-    .btn{ appearance:none; border:1px solid var(--outline); background:#0f141a; color:var(--text); padding:10px 12px; border-radius:12px; font-weight:700; cursor:pointer; }
-    .btn-sm{ padding:8px 10px; font-weight:600 } .btn-primary{ background:var(--primary); color:var(--on-primary); border-color:transparent }
-    .btn-tonal{ background:#1a2a1e; color:#c8f3c7; border-color:#2c3b2e } .btn-danger{ background:linear-gradient(180deg,#3a1111,#240a0a); color:#ffdede; border-color:#4a1b1b }
-    .input, .select{ background:#0f141a; color:var(--text); border:1px solid var(--outline); border-radius:12px; padding:10px 12px }
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Nvelopes • R18</title>
 
-    .stats{ display:grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap:12px; }
-    .card{ background:var(--surface-2); border:1px solid var(--outline); border-radius:var(--radius-lg); box-shadow:var(--shadow-1); padding:14px; }
-    .card h4{ margin:0 0 6px 0; font-size:12px; text-transform:uppercase; letter-spacing:.4px; color:var(--muted) }
-    .value{ font-size:26px; font-weight:900 }
-    .subvalue{ margin-top:4px; font-size:12px; color:var(--muted) }
+<!-- Cache-bust to ?v=... -->
+<script>
+(function(){
+  const BUILD='r18-2025-08-16';
+  const u=new URL(location.href);
+  if(u.searchParams.get('v')!==BUILD){u.searchParams.set('v',BUILD);location.replace(u.toString());}
+})();
+</script>
 
-    .layout{ display:grid; grid-template-columns: 1fr 0.9fr 1fr; gap:16px; align-items:start; }
-    .panel{ background:var(--surface-2); border:1px solid var(--outline); border-radius:var(--radius-lg); box-shadow:var(--shadow-1); padding:12px; display:flex; flex-direction:column; gap:12px; min-height:520px; }
-    .panel h3{ margin:4px 0; font-size:16px }
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js?v=r18"></script>
 
-    /* ENVELOPES */
-    .env-header{ display:flex; align-items:center; justify-content:space-between; gap:8px }
-    .env-actions{ display:flex; gap:8px; flex-wrap:wrap }
-    .env-form-wrap{ display:none }
-    .env-form-wrap.open{ display:block; animation: drop .18s ease-out }
-    @keyframes drop{ from{ transform: translateY(-4px); opacity:.0 } to{ transform: translateY(0); opacity:1 } }
-    .env-form{ display:flex; gap:8px; flex-wrap:wrap; align-items:flex-end; background:rgba(255,255,255,.02); border:1px dashed var(--outline); padding:10px; border-radius:12px }
-    .env-form label{ display:block; font-size:12px; color:var(--muted); margin:0 0 4px }
+<style>
+:root{ --primary:#80e27e; --on-primary:#032106; --surface:#0e1116; --surface-2:#141922; --surface-3:#10151c; --text:#e6ebf2; --muted:#aab4c3; --outline:#26303a; --danger:#ff6b6b; --radius:14px; --radius-lg:18px; --shadow-1:0 1px 2px rgba(0,0,0,.45), 0 2px 6px rgba(0,0,0,.35);} *{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0; font-family:Roboto, system-ui, -apple-system, Segoe UI, Helvetica, Arial; color:var(--text); background:linear-gradient(180deg,#0b0d11 0%, #0a0c0f 50%, #080a0d 100%);}
+.app{max-width:1280px; margin:0 auto; padding:16px; display:grid; gap:16px; grid-template-rows:auto auto 1fr; min-height:100dvh}
+.appbar{display:flex; align-items:center; gap:12px; padding:12px 16px; background:var(--surface-2); border:1px solid var(--outline); border-radius:var(--radius-lg); box-shadow:var(--shadow-1);}
+.logo{width:40px; height:40px; border-radius:12px; display:grid; place-items:center; font-weight:900; background:linear-gradient(135deg,#7bd88f,#6cb6ff); color:#041e0b;}
+.brand{display:grid;} .brand .title{font-weight:900;} .brand .sub{color:var(--muted); font-size:12px;}
+.tray{margin-left:auto; display:flex; gap:8px;}
+.btn{appearance:none; border:1px solid var(--outline); background:#0f141a; color:var(--text); padding:10px 12px; border-radius:12px; font-weight:700; cursor:pointer;}
+.btn-sm{padding:8px 10px; font-weight:600}
+.btn-primary{background:var(--primary); color:var(--on-primary); border-color:transparent}
+.btn-tonal{background:#1a2a1e; color:#c8f3c7; border-color:#2c3b2e}
+.btn-danger{background:linear-gradient(180deg,#3a1111,#240a0a); color:#ffdede; border-color:#4a1b1b}
+.input,.select{background:#0f141a; color:var(--text); border:1px solid var(--outline); border-radius:12px; padding:10px 12px}
 
-    .env-list{ display:grid; gap:10px; overflow:auto; max-height:65vh; padding-right:4px }
-    .empty-env{ color:var(--muted); font-size:13px; border:1px dashed var(--outline); padding:12px; border-radius:12px; }
-    .env{ position:relative; background:linear-gradient(180deg,#f7f1e4,#eee5d2); color:#2a2a2a; border:1px solid #d9ccb0; border-radius:10px; padding:12px 12px 10px 12px; box-shadow: 0 2px 4px rgba(0,0,0,.22), inset 0 1px 0 rgba(255,255,255,.6); cursor:grab; user-select:none; }
-    .env:active{ cursor:grabbing }
-    .env .stamp{ position:absolute; right:8px; top:8px; width:24px; height:24px; border-radius:6px; background:radial-gradient(circle at 30% 30%, #fff 0 30%, #ffe0f0 31% 100%); border:1px dashed #b88; box-shadow: inset 0 1px 0 rgba(255,255,255,.6); opacity:.9 }
-    .env::before{ content:""; position:absolute; left:0; right:0; top:0; height:42%; background:linear-gradient(180deg,#f1e9d6,#e8dcc3); clip-path: polygon(0 0, 100% 0, 50% 100%); border-top-left-radius:10px; border-top-right-radius:10px; border-bottom:1px solid rgba(0,0,0,.06); }
-    .env::after{ content:""; position:absolute; left:10px; right:10px; top:42%; height:1px; background:linear-gradient(90deg, transparent, rgba(0,0,0,.18), transparent); opacity:.6 }
-    .env .window{ position:relative; margin-top:26px; background:rgba(255,255,255,.7); border:1px solid rgba(0,0,0,.08); border-radius:8px; padding:8px 10px; backdrop-filter: blur(1px); box-shadow: inset 0 1px 0 rgba(255,255,255,.65); }
-    .env .name{ font-weight:900; font-size:13px; letter-spacing:.2px; color:#1e1e1e }
-    .env .meta{ color:#4a4a4a; font-size:11px }
-    .env .tape{ margin-top:6px; height:6px; border-radius:999px; background:repeating-linear-gradient( 90deg, rgba(0,0,0,.08) 0 10px, rgba(0,0,0,.12) 10px 20px ); overflow:hidden; border:1px solid rgba(0,0,0,.08); }
-    .env .bar{ height:100%; background:linear-gradient(90deg,#80e27e,#6cb6ff); width:0% }
-    .env.dragover{ outline:2px dashed #5aa65a; outline-offset:6px }
+.stats{display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px;}
+.card{background:var(--surface-2); border:1px solid var(--outline); border-radius:var(--radius-lg); box-shadow:var(--shadow-1); padding:14px;}
+.card h4{margin:0 0 6px 0; font-size:12px; text-transform:uppercase; letter-spacing:.4px; color:var(--muted)}
+.value{font-size:26px; font-weight:900}
+.subvalue{margin-top:4px; font-size:12px; color:var(--muted)}
 
-    /* MONEY TABLE */
-    .money{ display:grid; grid-template-rows:auto auto 1fr; position:relative }
-    .money-head{ position:sticky; top:0; z-index:3; background:linear-gradient(180deg, rgba(20,25,34,.98), rgba(20,25,34,.92)); padding-bottom:6px; border-bottom:1px dashed var(--outline) }
-    .money-stats{ display:flex; justify-content:space-between; align-items:center; margin-bottom:6px }
-    .money-stats strong{ font-size:20px }
-    .tray-combined{ position:sticky; top:56px; z-index:2; background:linear-gradient(180deg, rgba(20,25,34,.96), rgba(20,25,34,.90)); border:1px dashed var(--outline); border-radius:14px; padding:10px; box-shadow: inset 0 1px 0 rgba(255,255,255,.04); min-height:120px }
-    .tray-combined.drop-active{ border-color:var(--primary); box-shadow: 0 0 0 2px rgba(128,226,126,.15) inset; }
-    .tray-row{ display:flex; gap:12px; align-items:center; justify-content:space-between; flex-wrap:wrap; }
-    .tray-instructions{ color:var(--muted); font-size:13px; display:flex; align-items:center; gap:8px }
-    .tray-instructions .tag{ background:#1a2620; color:#c8f3c7; border:1px solid #294033; padding:4px 8px; border-radius:999px; font-size:12px; font-weight:700 }
-    #denomControls{ display:flex; gap:8px; align-items:center }
+.layout{display:grid; grid-template-columns:1fr .9fr 1fr; gap:16px; align-items:start;}
+.panel{background:var(--surface-2); border:1px solid var(--outline); border-radius:var(--radius-lg); box-shadow:var(--shadow-1); padding:12px; display:flex; flex-direction:column; gap:12px; min-height:520px;}
+.panel h3{margin:4px 0; font-size:16px}
 
-    /* Bills */
-    .bills{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-top:10px }
-    .bill{ position:relative; width:128px; height:60px; border-radius:8px; user-select:none; cursor:grab; box-shadow:0 2px 4px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.06); display:grid; place-items:center; padding:8px; border:1px solid rgba(0,0,0,.35); overflow:hidden; }
-    .bill:active{ cursor:grabbing }
-    .bill .note-center{ font-weight:900; font-size:20px; letter-spacing:.5px; text-shadow:0 1px 0 rgba(0,0,0,.2); }
-    .bill .note-corner{ position:absolute; font-weight:800; font-size:11px; opacity:.9 }
-    .bill .note-corner.tl{ top:6px; left:8px }
-    .bill .note-corner.br{ bottom:6px; right:8px }
-    .bill .seal{ position:absolute; width:28px; height:28px; border-radius:50%; display:grid; place-items:center; font-weight:800; font-size:12px; opacity:.8; right:8px; top:8px; text-shadow:0 1px 0 rgba(0,0,0,.2) }
-    .bill .serial{ position:absolute; left:8px; bottom:6px; font-family:monospace; font-size:10px; letter-spacing:.5px; opacity:.85 }
-    .bill .ribbon{ position:absolute; top:-6px; bottom:-6px; width:6px; left:57%; filter:blur(.2px); opacity:.55 }
-    .bill::before{ content:""; position:absolute; inset:0; background:
-      radial-gradient(200px 50px at 50% -20%, rgba(255,255,255,.14), transparent 60%),
-      repeating-linear-gradient(90deg, rgba(255,255,255,.06), rgba(255,255,255,.06) 1px, transparent 1px, transparent 4px);
-      pointer-events:none; mix-blend-mode:overlay; }
-    .bill::after{ content:""; position:absolute; inset:0; background:repeating-conic-gradient(from 0deg, rgba(255,255,255,.04) 0 10deg, transparent 10deg 20deg); opacity:.5; pointer-events:none; mix-blend-mode:overlay }
-    
-    .bill-1  { background:linear-gradient(180deg,#1f2f1f,#161f16); border-color:#2b3b2b; color:#e8f5e9; }
-    .bill-1 .seal{ background:#2e462e; color:#e8f5e9; }
-    .bill-5  { background:linear-gradient(180deg,#2a2335,#201a2b); border-color:#3d3350; color:#e9e0ff }
-    .bill-5 .seal{ background:#473761; color:#f2eaff }
-    .bill-10 { background:linear-gradient(180deg,#3a2a18,#2a1e12); border-color:#533a22; color:#ffe7c7 }
-    .bill-10 .seal{ background:#5a3b1f; color:#ffe7c7 }
-    .bill-20 { background:linear-gradient(180deg,#223a2a,#18281f); border-color:#2f4e3b; color:#cfead9 }
-    .bill-20 .seal{ background:#2d5a40; color:#e7fff2 }
-    .bill-50 { background:linear-gradient(180deg,#402338,#2d1928); border-color:#5a324e; color:#ffd8ef }
-    .bill-50 .seal{ background:#6a3a5b; color:#ffe5f6 }
-    .bill-100{ background:linear-gradient(180deg,#1c2a3d,#121c29); border-color:#2b3f58; color:#d6e8ff }
-    .bill-100 .seal{ background:#27415f; color:#e6f2ff }
-    .bill-100 .ribbon{ background:linear-gradient(180deg, #3aa0ff, #7cc6ff); }
+/* ENVELOPES */
+.env-header{display:flex; align-items:center; justify-content:space-between; gap:8px}
+.env-actions{display:flex; gap:8px; flex-wrap:wrap}
+.env-form-wrap{display:none}
+.env-form-wrap.open{display:block; animation:drop .18s ease-out}
+@keyframes drop{from{transform:translateY(-4px); opacity:0} to{transform:translateY(0); opacity:1}}
+.env-form{display:flex; gap:8px; flex-wrap:wrap; align-items:flex-end; background:rgba(255,255,255,.02); border:1px dashed var(--outline); padding:10px; border-radius:12px}
+.env-form label{display:block; font-size:12px; color:var(--muted); margin:0 0 4px}
 
-    .more-count{ color:var(--muted); font-size:12px }
+.env-list{display:grid; gap:10px; overflow:auto; max-height:65vh; padding-right:4px}
+.empty-env{color:var(--muted); font-size:13px; border:1px dashed var(--outline); padding:12px; border-radius:12px;}
+.env{position:relative; background:linear-gradient(180deg,#f7f1e4,#eee5d2); color:#2a2a2a; border:1px solid #d9ccb0; border-radius:10px; padding:12px 12px 10px; box-shadow:0 2px 4px rgba(0,0,0,.22), inset 0 1px 0 rgba(255,255,255,.6); cursor:grab; user-select:none;}
+.env:active{cursor:grabbing}
+.env .stamp{position:absolute; right:8px; top:8px; width:24px; height:24px; border-radius:6px; background:radial-gradient(circle at 30% 30%, #fff 0 30%, #ffe0f0 31% 100%); border:1px dashed #b88; box-shadow:inset 0 1px 0 rgba(255,255,255,.6); opacity:.9}
+.env::before{content:""; position:absolute; left:0; right:0; top:0; height:42%; background:linear-gradient(180deg,#f1e9d6,#e8dcc3); clip-path:polygon(0 0,100% 0,50% 100%); border-top-left-radius:10px; border-top-right-radius:10px; border-bottom:1px solid rgba(0,0,0,.06)}
+.env::after{content:""; position:absolute; left:10px; right:10px; top:42%; height:1px; background:linear-gradient(90deg,transparent,rgba(0,0,0,.18),transparent); opacity:.6}
+.env .window{position:relative; margin-top:26px; background:rgba(255,255,255,.7); border:1px solid rgba(0,0,0,.08); border-radius:8px; padding:8px 10px; backdrop-filter:blur(1px); box-shadow:inset 0 1px 0 rgba(255,255,255,.65);}
+.env .name{font-weight:900; font-size:13px; letter-spacing:.2px; color:#1e1e1e}
+.env .meta{color:#4a4a4a; font-size:11px}
+.env .tape{margin-top:6px; height:6px; border-radius:999px; background:repeating-linear-gradient(90deg,rgba(0,0,0,.08) 0 10px, rgba(0,0,0,.12) 10px 20px); overflow:hidden; border:1px solid rgba(0,0,0,.08)}
+.env .bar{height:100%; background:linear-gradient(90deg,#80e27e,#6cb6ff); width:0%}
+.env.dragover{outline:2px dashed #5aa65a; outline-offset:6px}
+.env.reorder-target{outline:2px dashed #6cb6ff; outline-offset:6px}
+.env .actions-inline{margin-top:8px; display:flex; justify-content:flex-end; gap:6px}
 
-    /* Transactions */
-    .tx-header{ display:flex; align-items:center; justify-content:space-between; gap:8px }
-    .tx-actions{ display:flex; gap:8px; align-items:center; flex-wrap:wrap }
-    .tx-form-wrap{ display:none }
-    .tx-form-wrap.open{ display:block; animation: drop .18s ease-out }
-    .tx-form{ display:flex; flex-wrap:wrap; gap:12px; align-items:flex-end; background:rgba(255,255,255,.02); border:1px dashed var(--outline); padding:10px; border-radius:12px }
-    .tx-form label{ display:block; font-size:12px; color:var(--muted); margin:0 0 4px }
-    .tx-list{ display:grid; gap:10px; overflow:auto; max-height:65vh; padding-right:4px }
-    .tx{ background:var(--surface-3); border:1px solid var(--outline); border-radius:14px; padding:10px; display:grid; grid-template-columns: 1fr auto; align-items:center; gap:8px }
-    .tx .meta{ color:var(--muted); font-size:12px }
-    .tx.dragover{ outline:2px dashed var(--primary); outline-offset:6px }
+/* MONEY TABLE */
+.money{display:grid; grid-template-rows:auto auto 1fr; position:relative}
+.money-head{position:sticky; top:0; z-index:3; background:linear-gradient(180deg,rgba(20,25,34,.98),rgba(20,25,34,.92)); padding-bottom:6px; border-bottom:1px dashed var(--outline)}
+.money-stats{display:flex; justify-content:space-between; align-items:center; margin-bottom:6px}
+.money-stats strong{font-size:20px}
+.tray-combined{position:sticky; top:56px; z-index:2; background:linear-gradient(180deg,rgba(20,25,34,.96),rgba(20,25,34,.90)); border:1px dashed var(--outline); border-radius:14px; padding:10px; box-shadow:inset 0 1px 0 rgba(255,255,255,.04); min-height:120px}
+.tray-combined.drop-active{border-color:var(--primary); box-shadow:0 0 0 2px rgba(128,226,126,.15) inset;}
+.tray-row{display:flex; gap:12px; align-items:center; justify-content:space-between; flex-wrap:wrap;}
+.tray-instructions{color:var(--muted); font-size:13px; display:flex; align-items:center; gap:8px}
+.tray-instructions .tag{background:#1a2620; color:#c8f3c7; border:1px solid #294033; padding:4px 8px; border-radius:999px; font-size:12px; font-weight:700}
+#denomControls{display:flex; gap:8px; align-items:center; flex-wrap:wrap}
 
-    .helper{ color:var(--muted); font-size:12px; }
+.bills{display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-top:10px}
+.bill{position:relative; width:128px; height:60px; border-radius:8px; user-select:none; cursor:grab; box-shadow:0 2px 4px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.06); display:grid; place-items:center; padding:8px; border:1px solid rgba(0,0,0,.35); overflow:hidden}
+.bill:active{cursor:grabbing}
+.bill .note-center{font-weight:900; font-size:20px; letter-spacing:.5px; text-shadow:0 1px 0 rgba(0,0,0,.2)}
+.bill .note-corner{position:absolute; font-weight:800; font-size:11px; opacity:.9}
+.bill .note-corner.tl{top:6px; left:8px}
+.bill .note-corner.br{bottom:6px; right:8px}
+.bill .seal{position:absolute; width:28px; height:28px; border-radius:50%; display:grid; place-items:center; font-weight:800; font-size:12px; opacity:.8; right:8px; top:8px; text-shadow:0 1px 0 rgba(0,0,0,.2)}
+.bill .serial{position:absolute; left:8px; bottom:6px; font-family:monospace; font-size:10px; letter-spacing:.5px; opacity:.85}
+.bill .ribbon{position:absolute; top:-6px; bottom:-6px; width:6px; left:57%; filter:blur(.2px); opacity:.55}
+.bill::before{content:""; position:absolute; inset:0; background:radial-gradient(200px 50px at 50% -20%, rgba(255,255,255,.14), transparent 60%), repeating-linear-gradient(90deg, rgba(255,255,255,.06), rgba(255,255,255,.06) 1px, transparent 1px, transparent 4px); pointer-events:none; mix-blend-mode:overlay}
+.bill::after{content:""; position:absolute; inset:0; background:repeating-conic-gradient(from 0deg, rgba(255,255,255,.04) 0 10deg, transparent 10deg 20deg); opacity:.5; pointer-events:none; mix-blend-mode:overlay}
 
-    /* Modal */
-    .modal-backdrop{ position:fixed; inset:0; background:rgba(0,0,0,.55); display:none; align-items:center; justify-content:center; z-index:50 }
-    .modal-backdrop.open{ display:flex }
-    .modal{ width:min(520px,90vw); background:var(--surface-2); border:1px solid var(--outline); border-radius:16px; box-shadow:var(--shadow-1); padding:16px }
-    .modal h4{ margin:0 0 10px 0 }
-    .modal .row{ display:flex; gap:10px; align-items:flex-end; flex-wrap:wrap }
-    .modal .actions{ display:flex; gap:8px; justify-content:flex-end; margin-top:12px }
+.bill-1{background:linear-gradient(180deg,#1f2f1f,#161f16); border-color:#2b3b2b; color:#e8f5e9}
+.bill-1 .seal{background:#2e462e; color:#e8f5e9}
+.bill-5{background:linear-gradient(180deg,#2a2335,#201a2b); border-color:#3d3350; color:#e9e0ff}
+.bill-5 .seal{background:#473761; color:#f2eaff}
+.bill-10{background:linear-gradient(180deg,#3a2a18,#2a1e12); border-color:#533a22; color:#ffe7c7}
+.bill-10 .seal{background:#5a3b1f; color:#ffe7c7}
+.bill-20{background:linear-gradient(180deg,#223a2a,#18281f); border-color:#2f4e3b; color:#cfead9}
+.bill-20 .seal{background:#2d5a40; color:#e7fff2}
+.bill-50{background:linear-gradient(180deg,#402338,#2d1928); border-color:#5a324e; color:#ffd8ef}
+.bill-50 .seal{background:#6a3a5b; color:#ffe5f6}
+.bill-100{background:linear-gradient(180deg,#1c2a3d,#121c29); border-color:#2b3f58; color:#d6e8ff}
+.bill-100 .seal{background:#27415f; color:#e6f2ff}
+.bill-100 .ribbon{background:linear-gradient(180deg,#3aa0ff,#7cc6ff)}
 
-    @media (max-width: 1100px){ .layout{ grid-template-columns:1fr } .env-list,.tx-list{ max-height:none } .tray-combined{ position:static } .bill{ width:44vw; max-width:220px; height:72px } }
-  </style>
+.bill.selected{outline:3px solid #6cb6ff; outline-offset:2px; box-shadow:0 0 0 3px rgba(108,182,255,.15), 0 2px 6px rgba(0,0,0,.45)}
+.more-count{color:var(--muted); font-size:12px}
+.selection-pill{font-size:12px; color:#cfe0ff; background:#0b1730; border:1px solid #1b2b52; padding:4px 8px; border-radius:999px}
+.selection-actions{display:flex; gap:6px; align-items:center}
+
+.tx-header{display:flex; align-items:center; justify-content:space-between; gap:8px}
+.tx-actions{display:flex; gap:8px; align-items:center; flex-wrap:wrap}
+.tx-form-wrap{display:none}
+.tx-form-wrap.open{display:block; animation:drop .18s ease-out}
+.tx-form{display:flex; flex-wrap:wrap; gap:12px; align-items:flex-end; background:rgba(255,255,255,.02); border:1px dashed var(--outline); padding:10px; border-radius:12px}
+.tx-form label{display:block; font-size:12px; color:var(--muted); margin:0 0 4px}
+.tx-list{display:grid; gap:10px; overflow:auto; max-height:65vh; padding-right:4px}
+.tx{background:var(--surface-3); border:1px solid var(--outline); border-radius:14px; padding:10px; display:grid; grid-template-columns:1fr auto; align-items:center; gap:8px}
+.tx .meta{color:var(--muted); font-size:12px}
+.tx.dragover{outline:2px dashed var(--primary); outline-offset:6px}
+
+/* Modal */
+.modal-backdrop{position:fixed; inset:0; background:rgba(0,0,0,.55); display:none; align-items:center; justify-content:center; z-index:50}
+.modal-backdrop.open{display:flex}
+.modal{width:min(520px,90vw); background:var(--surface-2); border:1px solid var(--outline); border-radius:16px; box-shadow:var(--shadow-1); padding:16px}
+.modal h4{margin:0 0 10px 0}
+.modal .row{display:flex; gap:10px; align-items:flex-end; flex-wrap:wrap}
+.modal .actions{display:flex; gap:8px; justify-content:flex-end; margin-top:12px}
+
+@media (max-width:1100px){.layout{grid-template-columns:1fr} .env-list,.tx-list{max-height:none} .tray-combined{position:static} .bill{width:44vw; max-width:220px; height:72px}}
+</style>
 </head>
 <body>
-  <div class="app" id="app">
-    <section class="appbar">
-      <div class="logo">N</div>
-      <div class="brand">
-        <span class="title">Nvelopes</span>
-        <span class="sub">R6 — Envs Export/Import • Excel/CSV import • No defaults • Set Bank</span>
-      </div>
-      <div class="tray">
-        <button id="exportBtn" class="btn btn-tonal btn-sm">Export</button>
-        <button id="importBtn" class="btn btn-sm">Import</button>
-        <button id="setBankBtn" class="btn btn-sm">Set Bank</button>
-        <button id="resetBtn" class="btn btn-danger btn-sm">Reset</button>
-      </div>
-    </section>
+<div class="app" id="app">
+  <section class="appbar">
+    <div class="logo">N</div>
+    <div class="brand"><span class="title">Nvelopes</span><span class="sub">R18</span></div>
+    <div class="tray">
+      <button id="exportBtn" class="btn btn-tonal btn-sm">Export</button>
+      <button id="importBtn" class="btn btn-sm">Import</button>
+      <button id="setBankBtn" class="btn btn-sm">Set Bank</button>
+      <button id="resetBtn" class="btn btn-danger btn-sm">Reset</button>
+    </div>
+  </section>
 
-    <section class="stats">
-      <div class="card"><h4>Envelope Balance</h4><div id="stat-env-balance" class="value">$0.00</div></div>
-      <div class="card" id="bankCard" style="cursor:pointer"><h4>Bank Balance</h4><div id="stat-bank-balance" class="value">$0.00</div><div class="subvalue">Starting: <span id="stat-bank-start">$0.00</span></div></div>
-    </section>
+  <section class="stats">
+    <div class="card"><h4>Envelope Balance</h4><div id="stat-env-balance" class="value">$0.00</div></div>
+    <div class="card" id="bankCard" style="cursor:pointer"><h4>Bank Balance</h4><div id="stat-bank-balance" class="value">$0.00</div><div class="subvalue">Starting: <span id="stat-bank-start">$0.00</span></div></div>
+  </section>
 
-    <section class="layout">
-      <!-- ENVELOPES -->
-      <div class="panel">
-        <div class="env-header">
-          <h3>Envelopes</h3>
-          <div class="env-actions">
-            <button id="toggleEnvForm" class="btn btn-primary btn-sm">Add</button>
-            <button id="exportEnvsBtn" class="btn btn-sm" title="Export only envelopes (JSON)">Export Envs</button>
-            <button id="importEnvsBtn" class="btn btn-sm" title="Import only envelopes (JSON)">Import Envs</button>
-          </div>
-        </div>
-
-        <!-- Hidden until Add is clicked -->
-        <div id="envFormWrap" class="env-form-wrap" aria-hidden="true">
-          <div class="env-form">
-            <div><label>Name</label><input id="newEnvName" class="input" placeholder="New envelope name" /></div>
-            <div><label>Budget ($)</label><input id="newEnvBudget" class="input" type="number" inputmode="decimal" step="0.01" placeholder="0.00" /></div>
-            <div style="display:flex; gap:8px; align-items:flex-end;">
-              <button id="addEnvelopeConfirm" class="btn btn-primary">Add</button>
-              <button id="cancelEnvForm" class="btn">Cancel</button>
-            </div>
-          </div>
-        </div>
-
-        <div class="env-list" id="envList"></div>
-        <div id="envEmpty" class="empty-env" style="display:none">No envelopes yet. Click <b>Add</b> to create your first envelope.</div>
-      </div>
-
-      <!-- MONEY TABLE -->
-      <div class="panel money" id="moneyPanel">
-        <div class="money-head">
-          <h3>Money Table (Unassigned Cash)</h3>
-          <div class="money-stats">
-            <strong id="pool-amount">$0.00</strong>
-            <div style="color:var(--muted); font-size:12px">Drop <b>deposits</b> or <b>envelopes</b> onto the tray below.</div>
-          </div>
-        </div>
-
-        <div id="billTray" class="tray-combined" aria-label="Money tray. Drop deposits or envelopes here and pick bill denomination.">
-          <div class="tray-row">
-            <div class="tray-instructions"><span>Drop</span><span class="tag">Deposits</span><span>or</span><span class="tag">Envelopes</span><span>here →</span></div>
-            <div id="denomControls">
-              <span style="color:var(--muted); font-size:12px">Denominations:</span>
-              <button class="btn btn-sm" data-denom="1">$1</button>
-	      <button class="btn btn-sm" data-denom="5">$5</button>
-              <button class="btn btn-sm" data-denom="10">$10</button>
-              <button class="btn btn-sm" data-denom="20">$20</button>
-              <button class="btn btn-sm" data-denom="50">$50</button>
-              <button class="btn btn-sm" data-denom="100">$100</button>
-              <button id="create-cash" class="btn btn-tonal btn-sm">Create Cash</button>
-              <button id="delete-cash" class="btn btn-sm">Delete Cash</button>
-            </div>
-          </div>
-          <div id="bills" class="bills" aria-live="polite"></div>
-        </div>
-
-        <div style="min-height:8px"></div>
-      </div>
-
-      <!-- TRANSACTIONS -->
-      <div class="panel">
-        <div class="tx-header">
-          <h3>Transactions</h3>
-          <div class="tx-actions">
-            <button id="toggleTxForm" class="btn btn-primary btn-sm">Add Tx</button>
-            <button id="excelImportBtn" class="btn btn-tonal btn-sm">Import Excel/CSV</button>
-          </div>
-        </div>
-        <div class="helper">Accepted columns (case-insensitive). Excel first sheet or CSV: <b>Date</b>, <b>Merchant</b>, <b>Amount</b>, <b>Type</b> ("expense" or "deposit"). If Type is missing, sign of Amount is used (negative = expense).</div>
-
-        <div id="txFormWrap" class="tx-form-wrap" aria-hidden="true">
-          <div class="tx-form">
-            <div><label>Date</label><input id="txDate" class="input" type="date" /></div>
-            <div><label>Merchant</label><input id="txMerchant" class="input" placeholder="e.g. Trader Joe's" /></div>
-            <div><label>Type</label><select id="txType" class="select"><option value="expense">Expense (−)</option><option value="deposit">Deposit (+)</option></select></div>
-            <div><label>Amount</label><input id="txAmount" class="input" type="number" inputmode="decimal" step="0.01" placeholder="0.00" /></div>
-            <div style="display:flex; gap:8px; align-items:flex-end;">
-              <button id="addTxConfirm" class="btn btn-primary">Add</button>
-              <button id="cancelTxForm" class="btn">Cancel</button>
-            </div>
-          </div>
-        </div>
-
-        <div class="tx-list" id="txList"></div>
-      </div>
-    </section>
-
-    <!-- Hidden file inputs -->
-    <input id="excelFile" type="file" accept=".xlsx,.xls,.csv" style="display:none" />
-    <input id="envImportFile" type="file" accept="application/json" style="display:none" />
-  </div>
-
-  <!-- Set Bank Modal -->
-  <div id="bankModalBackdrop" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="bankModalTitle">
-    <div class="modal">
-      <h4 id="bankModalTitle">Set Starting Bank Balance</h4>
-      <div class="row">
-        <div style="flex:1">
-          <label for="bankStartInput" style="display:block; font-size:12px; color:var(--muted); margin:0 0 4px">Amount (USD)</label>
-          <input id="bankStartInput" class="input" type="number" inputmode="decimal" step="0.01" min="0" placeholder="0.00" />
+  <section class="layout">
+    <!-- ENVELOPES -->
+    <div class="panel">
+      <div class="env-header">
+        <h3>Envelopes</h3>
+        <div class="env-actions">
+          <button id="toggleEnvForm" class="btn btn-primary btn-sm">Add</button>
         </div>
       </div>
-      <div class="actions">
-        <button id="bankCancel" class="btn">Cancel</button>
-        <button id="bankSave" class="btn btn-primary">Save</button>
+
+      <!-- Add Envelope -->
+      <div id="envFormWrap" class="env-form-wrap" aria-hidden="true">
+        <div class="env-form">
+          <div><label>Name</label><input id="newEnvName" class="input" placeholder="New envelope name" /></div>
+          <div><label>Budget ($)</label><input id="newEnvBudget" class="input" type="number" inputmode="decimal" step="0.01" placeholder="0.00" /></div>
+          <div><label>Starting Balance ($)</label><input id="newEnvStartBal" class="input" type="number" inputmode="decimal" step="0.01" placeholder="0.00" /></div>
+          <div style="display:flex; gap:8px; align-items:flex-end;">
+            <button id="addEnvelopeConfirm" class="btn btn-primary">Add</button>
+            <button id="cancelEnvForm" class="btn">Cancel</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="env-list" id="envList"></div>
+      <div id="envEmpty" class="empty-env" style="display:none">No envelopes yet. Click <b>Add</b> to create your first envelope.</div>
+    </div>
+
+    <!-- MONEY TABLE -->
+    <div class="panel money" id="moneyPanel">
+      <div class="money-head">
+        <h3>Money Table (Unassigned Cash)</h3>
+        <div class="money-stats">
+          <strong id="pool-amount">$0.00</strong>
+          <div class="selection-actions">
+            <span class="selection-pill" id="selCountPill" title="Selected bills in tray">Selected: 0</span>
+            <button id="selClearBtn" class="btn btn-sm" title="Clear selection">Clear</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="billTray" class="tray-combined" aria-label="Money tray. Drop deposits or envelopes here.">
+        <div class="tray-row">
+          <div class="tray-instructions"><span>Drop</span><span class="tag">Deposits</span><span>or</span><span class="tag">Envelopes</span><span>here →</span></div>
+          <div id="denomControls">
+            <span style="color:var(--muted); font-size:12px">Denominations:</span>
+            <button class="btn btn-sm" data-denom="1">$1</button>
+            <button class="btn btn-sm" data-denom="5">$5</button>
+            <button class="btn btn-sm" data-denom="10">$10</button>
+            <button class="btn btn-sm" data-denom="20">$20</button>
+            <button class="btn btn-sm" data-denom="50">$50</button>
+            <button class="btn btn-sm" data-denom="100">$100</button>
+            <button id="create-cash" class="btn btn-tonal btn-sm">Create Cash</button>
+            <button id="delete-cash" class="btn btn-sm">Delete Cash</button>
+          </div>
+        </div>
+        <div id="bills" class="bills" aria-live="polite"></div>
+      </div>
+
+      <div style="min-height:8px"></div>
+    </div>
+
+    <!-- TRANSACTIONS -->
+    <div class="panel">
+      <div class="tx-header">
+        <h3>Transactions</h3>
+        <div class="tx-actions">
+          <button id="toggleTxForm" class="btn btn-primary btn-sm">Add Tx</button>
+          <button id="excelImportBtn" class="btn btn-tonal btn-sm">Import Excel/CSV</button>
+        </div>
+      </div>
+      <div class="helper">Accepted columns: <b>Date</b>, <b>Merchant</b>, <b>Amount</b>, <b>Type</b> ("expense" or "deposit"). If Type is missing, sign of Amount is used (negative = expense).</div>
+
+      <div id="txFormWrap" class="tx-form-wrap" aria-hidden="true">
+        <div class="tx-form">
+          <div><label>Date</label><input id="txDate" class="input" type="date" /></div>
+          <div><label>Merchant</label><input id="txMerchant" class="input" placeholder="e.g. Trader Joe's" /></div>
+          <div><label>Type</label><select id="txType" class="select"><option value="expense">Expense (−)</option><option value="deposit">Deposit (+)</option></select></div>
+          <div><label>Amount</label><input id="txAmount" class="input" type="number" inputmode="decimal" step="0.01" placeholder="0.00" /></div>
+          <div style="display:flex; gap:8px; align-items:flex-end;">
+            <button id="addTxConfirm" class="btn btn-primary">Add</button>
+            <button id="cancelTxForm" class="btn">Cancel</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="tx-list" id="txList"></div>
+    </div>
+  </section>
+
+  <input id="excelFile" type="file" accept=".xlsx,.xls,.csv" style="display:none" />
+</div>
+
+<!-- Set Bank Modal -->
+<div id="bankModalBackdrop" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="bankModalTitle">
+  <div class="modal">
+    <h4 id="bankModalTitle">Set Starting Bank Balance</h4>
+    <div class="row">
+      <div style="flex:1">
+        <label for="bankStartInput" style="display:block; font-size:12px; color:var(--muted); margin:0 0 4px">Amount (USD)</label>
+        <input id="bankStartInput" class="input" type="number" inputmode="decimal" step="0.01" min="0" placeholder="0.00" />
       </div>
     </div>
+    <div class="actions">
+      <button id="bankCancel" class="btn">Cancel</button>
+      <button id="bankSave" class="btn btn-primary">Save</button>
+    </div>
   </div>
+</div>
 
-  <script>
-    const $ = s => document.querySelector(s);
-    const $$ = s => Array.from(document.querySelectorAll(s));
-    const fmt = n => (n||0).toLocaleString(undefined,{style:'currency',currency:'USD'});
-    const clamp = (n,a,b)=>Math.max(a,Math.min(b,n));
-    const todayISO = ()=> new Date().toISOString().slice(0,10);
-    const uid = (p='id') => `${p}_${Math.random().toString(36).slice(2,9)}`;
-
-    // ===== State =====
-    const DEFAULT_STATE = { bankStarting:0, cashPool:0, denom:20, archived:{deposits:0,expenses:0}, envelopes:[], transactions:[] };
-    const STORAGE_KEY = 'nvelopes_r6_storage';
-
-    let state = load();
-    function load(){
-      try{
-        const raw = localStorage.getItem(STORAGE_KEY);
-        const s = raw? JSON.parse(raw) : structuredClone(DEFAULT_STATE);
-        if(!s.archived) s.archived={deposits:0,expenses:0};
-        if(typeof s.bankStarting !== 'number') s.bankStarting = 0;
-        if(!Array.isArray(s.envelopes)) s.envelopes = [];
-        return s;
-      }catch{ return structuredClone(DEFAULT_STATE) }
-    }
-    function save(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
-
-    // ===== Derived =====
-    const envTotal = () => state.envelopes.reduce((sum,e)=> sum + e.balance, 0);
-    const signed = t => t.type==='deposit' ? t.amount : -t.amount;
-    // Recompute bank every render so deletes/toggles reflect immediately
-    // Bank reflects ONLY satisfied transactions (archived), not pending/imported ones
-    const bankTotal = () => state.bankStarting + state.archived.deposits - state.archived.expenses;
-
-    // ===== Render =====
-    function renderAll(){ renderTop(); renderEnvList(); renderTxForm(); renderTxList(); renderPool(); setupDrops(); toggleEnvEmpty(); }
-    function renderTop(){ $('#stat-env-balance').textContent = fmt(envTotal()); $('#stat-bank-balance').textContent = fmt(bankTotal()); $('#pool-amount').textContent = fmt(state.cashPool); const sEl=$('#stat-bank-start'); if(sEl) sEl.textContent=fmt(state.bankStarting); }
-
-    // Envelopes
-    function renderEnvList(){ const list=$('#envList'); list.innerHTML=''; state.envelopes.forEach(env=> list.appendChild(renderEnv(env))); }
-    function toggleEnvEmpty(){ const has = state.envelopes.length>0; $('#envEmpty').style.display = has? 'none':'block'; }
-    function renderEnv(env){
-      const el = document.createElement('div'); el.className='env'; el.setAttribute('aria-label', `${env.name}, ${fmt(env.balance)} of ${fmt(env.budget)}`);
-      el.draggable = true; el.dataset.dragtype = 'env'; el.dataset.envelopeId = env.id;
-      el.innerHTML = `
-        <div class="stamp" aria-hidden="true"></div>
-        <div class="window">
-          <div class="name">${env.name}</div>
-          <div class="meta">${fmt(env.balance)} / ${fmt(env.budget)}</div>
-        </div>
-        <div class="tape"><div class="bar" style="width:${clamp((env.balance/env.budget)*100,0,100)}%"></div></div>
-      `;
-      el.addEventListener('dragstart', e=>{ e.dataTransfer.setData('text/plain', JSON.stringify({type:'env', envelopeId:env.id})); });
-      el.addEventListener('dragover', e=>{ e.preventDefault(); el.classList.add('dragover'); });
-      el.addEventListener('dragleave', ()=> el.classList.remove('dragover'));
-      el.addEventListener('drop', e=>{ e.preventDefault(); el.classList.remove('dragover'); const p=parseDragData(e); if (p?.type === 'bill') {
-  allocateToEnvelope(env.id, p.value);
-} else if (p?.type === 'tx') {
-  assignDepositToEnvelope(p.txId, env.id);
-}});
-      return el;
-    }
-
-    // Env form show/hide controls
-    function openEnvForm(){ const wrap=$('#envFormWrap'); wrap.classList.add('open'); wrap.setAttribute('aria-hidden','false'); $('#newEnvName').focus(); }
-    function closeEnvForm(){ const wrap=$('#envFormWrap'); wrap.classList.remove('open'); wrap.setAttribute('aria-hidden','true'); if($('#newEnvName')) $('#newEnvName').value=''; if($('#newEnvBudget')) $('#newEnvBudget').value=''; }
-
-    // Transactions
-    function renderTxForm(){ const wrap = $('#txFormWrap'); if(wrap && wrap.classList.contains('open')){ $('#txDate').value = todayISO(); }}
-    function renderTxList(){ const list=$('#txList'); list.innerHTML=''; [...state.transactions].sort((a,b)=> new Date(b.date)-new Date(a.date)).forEach(tx=> list.appendChild(renderTx(tx))); renderTop(); }
-    function renderTx(tx){
-      const el = document.createElement('div'); el.className='tx';
-      const sign = tx.type==='expense' ? '-' : '+';
-      const paidText = tx.type==='expense' ? ` · paid ${fmt(tx.paidAmount||0)} / ${fmt(tx.amount)}` : '';
-      el.innerHTML = `<div><div><strong>${sign}${fmt(tx.amount)}</strong> · ${tx.merchant||'(No merchant)'}<span class="meta">${paidText}</span></div><div class="meta">${new Date(tx.date).toLocaleDateString()} · id:${tx.id.slice(-5)}</div></div><div style="display:flex; gap:6px;"><button class="btn btn-sm" data-act="delete">Delete</button></div>`;
-      el.draggable = (tx.type==='deposit');
-      if(tx.type==='deposit') el.addEventListener('dragstart', e=> e.dataTransfer.setData('text/plain', JSON.stringify({type:'tx', txId:tx.id})) );
-      el.addEventListener('dragover', e=>{ if(tx.type==='expense'){ e.preventDefault(); el.classList.add('dragover'); }});
-      el.addEventListener('dragleave', ()=> el.classList.remove('dragover'));
-      el.addEventListener('drop', e=>{ e.preventDefault(); el.classList.remove('dragover'); const p=parseDragData(e); if(p?.type==='bill' && tx.type==='expense'){ payTransactionWithBill(tx.id, p.value); }});
-      el.querySelector('[data-act="delete"]').addEventListener('click', ()=> deleteTx(tx.id));
-      return el;
-    }
-
-    // Money Tray
-    function renderPool(){ $('#pool-amount').textContent = fmt(state.cashPool); const b=$('#bills'); b.innerHTML=''; const count=Math.floor(state.cashPool/state.denom); const max=20; for(let i=0;i<Math.min(count,max);i++) b.appendChild(makeBill(state.denom)); if(count>max){ const s=document.createElement('span'); s.className='more-count'; s.textContent = `+${count-max} more`; b.appendChild(s);} }
-    function makeBill(value){ const el=document.createElement('div'); const cls=`bill bill-${value}`; el.className=cls; el.draggable=true; el.dataset.value=String(value); const serial=`NV${String(Math.floor(Math.random()*1e8)).padStart(8,'0')}`; el.innerHTML=`<span class="note-corner tl">$${value}</span><span class="note-center">$${value}</span><span class="note-corner br">$${value}</span><span class="seal">NV</span><span class="serial">${serial}</span><span class="ribbon"></span>`; el.addEventListener('dragstart', e=> e.dataTransfer.setData('text/plain', JSON.stringify({type:'bill', value})) ); return el; }
-
-    function setupDrops(){
-      const tray = $('#billTray');
-      const panel = $('#moneyPanel');
-      ['dragenter','dragover'].forEach(ev => {
-        tray.addEventListener(ev, e=>{ e.preventDefault(); tray.classList.add('drop-active'); });
-        panel.addEventListener(ev, e=>{ e.preventDefault(); });
-      });
-      tray.addEventListener('dragleave', ()=> tray.classList.remove('drop-active'));
-      tray.addEventListener('drop', e=>{ e.preventDefault(); tray.classList.remove('drop-active'); const p=parseDragData(e); if(!p) return; if(p.type==='tx') convertDepositToCash(p.txId); if(p.type==='env') moveEnvelopeToCash(p.envelopeId); });
-      panel.addEventListener('drop', e=>{ if(e.target && (e.target.closest && e.target.closest('#billTray'))) return; e.preventDefault(); const p=parseDragData(e); if(!p) return; if(p.type==='tx') convertDepositToCash(p.txId); if(p.type==='env') moveEnvelopeToCash(p.envelopeId); });
-    }
-
-    // Domain ops
-    function addEnvelope(name,budget){ if(!name) return alert('Envelope name required'); state.envelopes.push({ id:uid('env'), name, budget:Math.max(0,Number(budget)||0), balance:0 }); save(); renderAll(); closeEnvForm(); }
-    function allocateToEnvelope(envelopeId, amount){ amount=Math.floor(amount*100)/100; if(amount<=0) return; if(state.cashPool<amount) { alert('Not enough unassigned cash'); return; } const env=state.envelopes.find(e=>e.id===envelopeId); if(!env) return; env.balance+=amount; state.cashPool-=amount; save(); renderAll(); }
-    function moveEnvelopeToCash(envelopeId){ const env = state.envelopes.find(x=> x.id===envelopeId); if(!env) return; if(env.balance<=0) return; state.cashPool += env.balance; env.balance = 0; save(); renderAll(); }
-
-    function addTxFromForm(){ const date=$('#txDate').value||todayISO(); const merchant=$('#txMerchant').value.trim(); const type=$('#txType').value; const amount=Number($('#txAmount').value||0); if(amount<=0) return alert('Amount must be > 0'); const tx={ id:uid('tx'), date, merchant, amount, type, paidAmount: type==='expense'? 0: undefined }; state.transactions.push(tx); save(); renderAll(); closeTxForm(); }
-    function deleteTx(id){
-      const i=state.transactions.findIndex(t=>t.id===id);
-      if(i<0) return;
-      // Remove the transaction
-      state.transactions.splice(i,1);
-      // Save and re-render — bank balance is derived from state and will update immediately
-      save();
-      renderAll();
-      // subtle flash on the bank card to indicate update
-      const card = document.getElementById('bankCard');
-      if(card){
-        card.animate([{boxShadow:'0 0 0 0 rgba(128,226,126,0.0)'},{boxShadow:'0 0 0 6px rgba(128,226,126,0.15)'},{boxShadow:'0 0 0 0 rgba(128,226,126,0.0)'}],{duration:450, easing:'ease-out'});
-      }
-    }
-
-    // Drag helpers
-    function parseDragData(e){ try{ return JSON.parse(e.dataTransfer.getData('text/plain')); }catch{ return null; } }
-
-    // Money operations
-    function convertDepositToCash(txId){ const tx = state.transactions.find(t=>t.id===txId); if(!tx) return; if(tx.type!=='deposit'){ alert('Only deposit (positive) transactions can be converted here.'); return; } state.cashPool += tx.amount; state.archived.deposits += tx.amount; const i = state.transactions.findIndex(t=>t.id===txId); if(i>=0) state.transactions.splice(i,1); save(); renderAll(); }
-    function payTransactionWithBill(txId, billValue){ const tx = state.transactions.find(t=>t.id===txId); if(!tx || tx.type!=='expense') return; if(state.cashPool < billValue) { alert('Not enough unassigned cash.'); return; } const remaining = tx.amount - (tx.paidAmount||0); const applied = Math.min(remaining, billValue); state.cashPool -= applied; tx.paidAmount = (tx.paidAmount||0) + applied; if(tx.paidAmount >= tx.amount - 1e-6){ state.archived.expenses += tx.amount; const idx = state.transactions.findIndex(t=>t.id===txId); if(idx!==-1) state.transactions.splice(idx,1); } save(); renderAll(); }
-
-    // ===== App State Export/Import =====
-    function download(filename, text){
-      const blob = new Blob([text], {type: 'application/json'});
-      const url = URL.createObjectURL(blob);
-      const a=document.createElement('a');
-      a.href=url; a.download=filename; a.style.display='none';
-      document.body.appendChild(a); a.click();
-      setTimeout(()=>{ URL.revokeObjectURL(url); a.remove(); }, 0);
-    }
-    function exportData(){ download(`nvelopes-${new Date().toISOString().replace(/[:.]/g,'-')}.json`, JSON.stringify(state,null,2)); }
-    function importData(){ const inp=document.createElement('input'); inp.type='file'; inp.accept='application/json'; inp.onchange=()=>{ const f=inp.files?.[0]; if(!f) return; const r=new FileReader(); r.onload=()=>{ try{ state=JSON.parse(r.result); if(!state.archived) state.archived={deposits:0,expenses:0}; if(typeof state.bankStarting!=='number') state.bankStarting=0; if(!Array.isArray(state.envelopes)) state.envelopes=[]; save(); renderAll(); }catch{ alert('Invalid file'); } }; r.readAsText(f); }; inp.click(); }
-
-    // ===== Envelope-only Export/Import =====
-    function exportEnvelopes(){
-      try{
-        const payload = {
-          version: 'r6',
-          exportedAt: new Date().toISOString(),
-          envelopes: state.envelopes.map(({id,name,budget,balance})=>({id,name,budget,balance}))
-        };
-        download(`nvelopes-envelopes-${new Date().toISOString().replace(/[:.]/g,'-')}.json`, JSON.stringify(payload,null,2));
-      }catch(err){ console.error(err); alert('Could not export envelopes.'); }
-    }
-
-    function importEnvelopes(){
-      const fileInput = $('#envImportFile');
-      fileInput.onchange = () => {
-        const f = fileInput.files?.[0]; fileInput.value=''; if(!f) return;
-        const r = new FileReader();
-        r.onload = () => {
-          try{
-            let data = JSON.parse(r.result);
-            let incoming = Array.isArray(data)? data : Array.isArray(data?.envelopes)? data.envelopes : null;
-            if(!incoming) throw new Error('File must be an array of envelopes or { envelopes: [...] }');
-            incoming = incoming.map(e=>({ id: e.id && typeof e.id==='string' ? e.id : uid('env'), name: String(e.name||'').trim() || 'Untitled', budget: Math.max(0, Number(e.budget)||0), balance: Math.max(0, Number(e.balance)||0) }));
-            const replace = confirm('Replace existing envelopes?\nOK = Replace, Cancel = Merge');
-            if(replace){ state.envelopes = incoming; }
-            else{
-              const byName = new Map(state.envelopes.map(e=> [e.name.toLowerCase(), e]));
-              for(const inc of incoming){ const key=inc.name.toLowerCase(); if(byName.has(key)){ const cur=byName.get(key); cur.budget=inc.budget; cur.balance=inc.balance; } else { state.envelopes.push(inc); } }
-            }
-            save(); renderAll(); alert(`Imported ${incoming.length} envelope(s).`);
-          }catch(err){ console.error(err); alert('Invalid envelope file: '+ err.message); }
-        };
-        r.readAsText(f);
-      };
-      fileInput.click();
-    }
-
-    // ===== Bank Modal =====
-    function openBankModal(){ const bd=$('#bankModalBackdrop'); const input=$('#bankStartInput'); if(!bd||!input) return; input.value = String(state.bankStarting||0); bd.classList.add('open'); setTimeout(()=> input.focus(), 0); }
-    function closeBankModal(){ const bd=$('#bankModalBackdrop'); if(bd) bd.classList.remove('open'); }
-    function saveBankStarting(){ const v = Number($('#bankStartInput').value); if(!Number.isFinite(v) || v < 0){ alert('Please enter a valid non-negative number.'); return; } state.bankStarting = Math.round(v*100)/100; save(); closeBankModal(); renderAll(); }
-
-    // Tx form controls
-    function openTxForm(){ const wrap=$('#txFormWrap'); wrap.classList.add('open'); wrap.setAttribute('aria-hidden','false'); $('#txDate').value=todayISO(); $('#txMerchant').focus(); }
-    function closeTxForm(){ const wrap=$('#txFormWrap'); wrap.classList.remove('open'); wrap.setAttribute('aria-hidden','true'); if($('#txDate')) $('#txDate').value=''; if($('#txMerchant')) $('#txMerchant').value=''; if($('#txAmount')) $('#txAmount').value=''; }
-
-    // ===== Excel/CSV Import =====
-    const ACCEPTED_TYPES = ['xlsx','xls','csv'];
-    const COL_ALIASES = { date: ['date','posted date','transaction date','time'], merchant: ['merchant','description','name','memo','payee'], amount: ['amount','amt','value','total'], type: ['type','txn type','transaction type'] };
-    function normalizeHeader(h){ return String(h||'').trim().toLowerCase(); }
-    function findCol(map, key){ const wanted = COL_ALIASES[key]; for(const k of Object.keys(map)){ if(wanted.includes(k)) return map[k]; } return null; }
-    function parseExcelDate(v){ if(v == null || v === '') return todayISO(); if(v instanceof Date) return v.toISOString().slice(0,10); if(typeof v === 'number'){ const epoch = new Date(Date.UTC(1899,11,30)); const ms = v * 86400000; const d = new Date(epoch.getTime()+ms); return d.toISOString().slice(0,10);} const t = String(v).trim(); const tryDirect = new Date(t); if(!isNaN(tryDirect)) return tryDirect.toISOString().slice(0,10); return todayISO(); }
-    function coerceAmount(a){ if(a==null || a==='') return NaN; let s = String(a).replace(/[$,\s]/g,''); const num = Number(s); return Number.isFinite(num)? num : NaN; }
-    function decideType(typeCell, amount){ const t = String(typeCell||'').trim().toLowerCase(); if(t === 'expense' || t === 'debit' || t === 'withdrawal' || t === 'payment') return 'expense'; if(t === 'deposit' || t === 'credit' || t === 'refund') return 'deposit'; if(Number.isFinite(amount)) return amount < 0 ? 'expense' : 'deposit'; return 'expense'; }
-    async function importExcelOrCsv(file){ const ext = file.name.split('.').pop().toLowerCase(); if(!ACCEPTED_TYPES.includes(ext)) { alert('Please select an .xlsx, .xls, or .csv file.'); return; } if(ext === 'csv') { const text = await file.text(); return importCsv(text);} const data = await file.arrayBuffer(); const wb = XLSX.read(data, { type: 'array' }); const firstSheet = wb.Sheets[0 ? wb.SheetNames[0] : 0]; const rows = XLSX.utils.sheet_to_json(firstSheet, { header:1, raw:true }); return importRows(rows); }
-    function importCsv(text){ const rows = text.split(/\r?\n/).map(r=> r.split(/,(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)/).map(c=> c.replace(/^\"|\"$/g,''))); return importRows(rows); }
-    function importRows(rows){ if(!rows || !rows.length) { alert('No rows found.'); return; } const header = rows[0].map(normalizeHeader); const headerMap = {}; header.forEach((h,i)=> headerMap[h]=i); const idx = { date: findCol(headerMap,'date'), merchant: findCol(headerMap,'merchant'), amount: findCol(headerMap,'amount'), type: findCol(headerMap,'type') }; if(idx.amount == null) { alert('Missing Amount column. Include a column named Amount/Value/Total.'); return; } let added = 0, skipped = 0; for(let r=1;r<rows.length;r++){ const row = rows[r]; if(!row || row.every(c=> String(c||'').trim()==='')) continue; const amountRaw = idx.amount!=null ? row[idx.amount] : null; const amountVal = coerceAmount(amountRaw); if(!Number.isFinite(amountVal)) { skipped++; continue; } const typeCell = idx.type!=null ? row[idx.type] : ''; const txnType = decideType(typeCell, amountVal); const merchant = idx.merchant!=null ? String(row[idx.merchant]||'').trim() : ''; const dateCell = idx.date!=null ? row[idx.date] : null; const date = parseExcelDate(dateCell); const absAmount = Math.abs(amountVal); const tx = { id: uid('tx'), date, merchant, amount: absAmount, type: txnType, paidAmount: txnType==='expense' ? 0 : undefined }; state.transactions.push(tx); added++; } save(); renderAll(); alert(`Imported ${added} transaction(s).${skipped?` Skipped ${skipped} row(s).`:''}`); }
-
-    // Events
-    $('#toggleEnvForm').addEventListener('click', ()=>{ const wrap=$('#envFormWrap'); wrap.classList.contains('open')? closeEnvForm() : openEnvForm(); });
-    $('#addEnvelopeConfirm').addEventListener('click', ()=> addEnvelope($('#newEnvName').value.trim(), Number($('#newEnvBudget').value||0)) );
-    $('#cancelEnvForm').addEventListener('click', closeEnvForm);
-
-    $('#exportEnvsBtn').addEventListener('click', exportEnvelopes);
-    $('#importEnvsBtn').addEventListener('click', importEnvelopes);
-
-    $('#toggleTxForm').addEventListener('click', ()=>{ const wrap=$('#txFormWrap'); wrap.classList.contains('open')? closeTxForm() : openTxForm(); });
-    $('#addTxConfirm').addEventListener('click', addTxFromForm);
-    $('#cancelTxForm').addEventListener('click', closeTxForm);
-
-    if($('#plaidMock')) $('#plaidMock').addEventListener('click', plaidMock);
-    $('#exportBtn').addEventListener('click', exportData);
-    $('#importBtn').addEventListener('click', importData);
-    $('#resetBtn').addEventListener('click', ()=>{ if(!confirm('Reset demo and clear all data?')) return; state=structuredClone(DEFAULT_STATE); save(); renderAll(); });
-
-    $('#setBankBtn').addEventListener('click', openBankModal);
-    $('#bankCard').addEventListener('click', openBankModal);
-    $('#bankCancel').addEventListener('click', closeBankModal);
-    $('#bankSave').addEventListener('click', saveBankStarting);
-
-    document.querySelector('#denomControls').addEventListener('click', e=>{ const btn=e.target.closest('button'); if(!btn) return; const d=btn.dataset.denom; if(d){ state.denom=Number(d); save(); renderPool(); return; } });
-    if($('#create-cash')) $('#create-cash').addEventListener('click', ()=>{ const n=Number(prompt('Create cash in Unassigned', '100'))||0; state.cashPool+=Math.max(0,n); save(); renderAll(); });
-    if($('#delete-cash')) $('#delete-cash').addEventListener('click', ()=>{ const n=Number(prompt('Delete cash from Unassigned', '50'))||0; if(state.cashPool<n) return alert('Not enough unassigned cash'); state.cashPool-=n; save(); renderAll(); });
-
-    $('#excelImportBtn').addEventListener('click', ()=> $('#excelFile').click());
-    $('#excelFile').addEventListener('change', async (e)=>{ const file=e.target.files?.[0]; if(!file) return; await importExcelOrCsv(file); e.target.value = ''; });
-
-    document.addEventListener('keydown', e=>{ if(e.key==='Escape'){ const bd=$('#bankModalBackdrop'); if(bd && bd.classList.contains('open')) closeBankModal(); const txOpen=$('#txFormWrap').classList.contains('open'); const envOpen=$('#envFormWrap').classList.contains('open'); if(txOpen) closeTxForm(); if(envOpen) closeEnvForm(); }});
-
-    // Mock Plaid
-    const MOCK_MERCHANTS=['Amazon','Trader Joe\'s','Chevron','Target','Costco','Walmart','Shell','Local Coffee','Utilities','Lyft'];
-    function plaidMock(){ const n=Math.floor(Math.random()*4)+3; for(let i=0;i<n;i++){ const type=Math.random()<.5? 'expense':'deposit'; const amount=Math.round((Math.random()*90+10)*100)/100; const date=new Date(); date.setDate(date.getDate()-Math.floor(Math.random()*20)); state.transactions.push({ id:uid('tx'), date:date.toISOString().slice(0,10), merchant:MOCK_MERCHANTS[Math.floor(Math.random()*MOCK_MERCHANTS.length)], amount, type, paidAmount: type==='expense'?0:undefined }); } save(); renderAll(); }
-
-    // Boot
-    renderAll();
-  </script>
-</body>
-</html>
+<!-- Edit Envelope Modal -->
+<div id="envEditBackdrop" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="envEditTitle">
+  <div class="modal">
+    <h4 id="envEditTitle">Edit Envelope</h4>
+    <div class="row">
+      <div style="flex:1">
+        <label style="display:block; font-size:12px; color:var(--muted); margin:0 0 4px">Name</label>
+        <input id="editEnvName" class="input" placeholder="Envelope name" />
+      </div>
+      <div>
+        <label style="display:block; font-size:12px; color:var(--muted); margin:0 0 4px">Budget ($)</label>
+        <input id="editEnvBudget" class="input" type="number" inputmode="decimal" step="0.01" min="0" />
+      </div>
+      <div>
+        <label style="display:block; font-size:12px; color:var(--muted); margin:0 0 4px">Balance ($)</label>
+        <input id="editEnvBalance" class="input" type="number" inputmode="decimal" step="0.01" min="0" />
+      </div>
+    </div>
+    <div class="actions">
+      <button id="envEditCancel" class="btn">Cancel</button>
+      <button id="envEditSave" class="btn btn-primary">Save</button>
+    </div>
+  </div>
+</div>
 
 <script>
-// Add function to pay a transaction from an envelope directly
-function payTransactionWithEnvelope(txId, envId){
-  const tx = state.transactions.find(t => t.id === txId);
-  const env = state.envelopes.find(e => e.id === envId);
-  if(!tx || tx.type !== 'expense') return;
-  if(!env || env.balance <= 0) return alert('Envelope is empty');
-  const remaining = tx.amount - (tx.paidAmount || 0);
-  const payment = Math.min(remaining, env.balance);
-  env.balance -= payment;
-  tx.paidAmount = (tx.paidAmount || 0) + payment;
-  if(tx.paidAmount >= tx.amount - 0.0001){
-    state.archived.expenses += tx.amount;
-    state.transactions = state.transactions.filter(t => t.id !== txId);
+(function(){
+  // ===== Utils =====
+  const $ = s => document.querySelector(s);
+  const $$ = s => Array.from(document.querySelectorAll(s));
+  const fmt = n => (n||0).toLocaleString(undefined,{style:'currency',currency:'USD'});
+  const clamp = (n,a,b)=>Math.max(a,Math.min(b,n));
+  const todayISO = ()=> new Date().toISOString().slice(0,10);
+  const uid = (p='id') => p+'_'+Math.random().toString(36).slice(2,9);
+
+  // ===== State =====
+  const DEFAULT_STATE = { bankStarting:0, cashPool:0, denom:20, archived:{deposits:0,expenses:0}, envelopes:[], transactions:[] };
+  const STORAGE_KEY = 'nvelopes_r18_edit_storage';
+  let state = load();
+
+  // selection state for bills (multi-select)
+  const selectedBills = new Set();
+  let lastClickedBillIndex = null;
+
+  // temp for edit modal
+  let editingEnvId = null;
+
+  function load(){
+    try{
+      const raw = localStorage.getItem(STORAGE_KEY);
+      const s = raw? JSON.parse(raw) : structuredClone(DEFAULT_STATE);
+      if(!s.archived) s.archived={deposits:0,expenses:0};
+      if(typeof s.bankStarting!=='number') s.bankStarting=0;
+      if(!Array.isArray(s.envelopes)) s.envelopes=[];
+      if(!Array.isArray(s.transactions)) s.transactions=[];
+      if(!s.denom) s.denom = 20;
+      return s;
+    }catch{ return structuredClone(DEFAULT_STATE) }
   }
-  save();
-  renderAll();
-}
+  function save(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
 
-// Modify transaction rendering to accept envelope drops
-function renderTx(tx){
-  const el = document.createElement('div');
-  el.className = 'tx';
-  const sign = tx.type === 'expense' ? '-' : '+';
-  const paidText = tx.type === 'expense' ? ` · paid ${fmt(tx.paidAmount || 0)} / ${fmt(tx.amount)}` : '';
-  el.innerHTML = `<div><div><strong>${sign}${fmt(tx.amount)}</strong> · ${tx.merchant || '(No merchant)'}<span class="meta">${paidText}</span></div><div class="meta">${new Date(tx.date).toLocaleDateString()} · id:${tx.id.slice(-5)}</div></div><div style="display:flex; gap:6px;"><button class="btn btn-sm" data-act="delete">Delete</button></div>`;
+  // ===== Derived =====
+  const envTotal = () => state.envelopes.reduce((sum,e)=> sum + e.balance, 0);
+  const bankTotal = () => state.bankStarting + state.archived.deposits - state.archived.expenses;
 
-  if(tx.type === 'deposit') {
+  // ===== Render root =====
+  function renderAll(){
+    renderTop();
+    renderEnvList();
+    renderTxForm();
+    renderTxList();
+    renderPool();
+    setupDrops();
+    toggleEnvEmpty();
+  }
+  function renderTop(){
+    $('#stat-env-balance').textContent = fmt(envTotal());
+    $('#stat-bank-balance').textContent = fmt(bankTotal());
+    $('#pool-amount').textContent = fmt(state.cashPool);
+    const sEl=$('#stat-bank-start'); if(sEl) sEl.textContent=fmt(state.bankStarting);
+  }
+
+  // ===== Envelopes =====
+  function renderEnvList(){
+    const list=$('#envList'); list.innerHTML='';
+    state.envelopes.forEach(env=> list.appendChild(renderEnv(env)));
+  }
+  function toggleEnvEmpty(){ $('#envEmpty').style.display = state.envelopes.length? 'none':'block'; }
+
+  function deleteEnvelope(envelopeId){
+    const env = state.envelopes.find(e => e.id === envelopeId);
+    if(!env) return;
+    if((env.balance||0) > 0){
+      const ok = confirm(`"${env.name}" still has ${fmt(env.balance)}.\nOK = Move to Unassigned & delete\nCancel = Keep envelope`);
+      if(!ok) return;
+      state.cashPool += env.balance;
+    }
+    state.envelopes = state.envelopes.filter(e => e.id !== envelopeId);
+    save(); renderAll();
+  }
+
+  function reorderEnvelope(sourceId, targetId){
+    if(sourceId === targetId) return;
+    const arr = state.envelopes;
+    const sIndex = arr.findIndex(e => e.id === sourceId);
+    const tIndex = arr.findIndex(e => e.id === targetId);
+    if(sIndex < 0 || tIndex < 0) return;
+    const [item] = arr.splice(sIndex, 1);
+    arr.splice(tIndex, 0, item);
+    save();
+    renderEnvList();
+  }
+
+  function renderEnv(env){
+    const el = document.createElement('div');
+    el.className='env';
+    el.setAttribute('aria-label', `${env.name}, ${fmt(env.balance)} of ${fmt(env.budget)}`);
     el.draggable = true;
-    el.addEventListener('dragstart', e => e.dataTransfer.setData('text/plain', JSON.stringify({type:'tx', txId:tx.id})));
-  } else if(tx.type === 'expense') {
-    el.addEventListener('dragover', e => { e.preventDefault(); el.classList.add('dragover'); });
-    el.addEventListener('dragleave', () => el.classList.remove('dragover'));
-    el.addEventListener('drop', e => {
+    el.dataset.dragtype = 'env';
+    el.dataset.envelopeId = env.id;
+
+    el.innerHTML = `
+      <div class="stamp" aria-hidden="true"></div>
+      <div class="window">
+        <div class="name">${env.name}</div>
+        <div class="meta">${fmt(env.balance)} / ${fmt(env.budget)}</div>
+      </div>
+      <div class="tape"><div class="bar" style="width:${clamp((env.balance/env.budget)*100,0,100)}%"></div></div>
+      <div class="actions-inline">
+        <button class="btn btn-sm" data-act="env-edit" title="Edit envelope">Edit</button>
+        <button class="btn btn-sm" data-act="env-delete" title="Delete envelope">Delete</button>
+      </div>
+    `;
+
+    // drag source (env)
+    el.addEventListener('dragstart', e => {
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', JSON.stringify({type:'env', envelopeId:env.id}));
+    });
+    // dragover: accepts bill (fund), deposit (assign), env (reorder)
+    el.addEventListener('dragover', e => {
       e.preventDefault();
-      el.classList.remove('dragover');
       const p = parseDragData(e);
-      if(!p) return;
-      if(p.type === 'bill') {
-        payTransactionWithBill(tx.id, p.value);
-      } else if(p.type === 'env') {
-        payTransactionWithEnvelope(tx.id, p.envelopeId);
+      if(p?.type === 'env' && p.envelopeId !== env.id){ el.classList.add('reorder-target'); }
+      else{ el.classList.remove('reorder-target'); }
+      if(p?.type === 'bill') el.classList.add('dragover');
+    });
+    el.addEventListener('dragleave', () => { el.classList.remove('dragover'); el.classList.remove('reorder-target'); });
+    el.addEventListener('drop', e => {
+      e.preventDefault(); el.classList.remove('dragover'); el.classList.remove('reorder-target');
+      const p = parseDragData(e); if(!p) return;
+      if (p.type === 'bill'){
+        const count = Math.max(1, Math.floor(Number(p.count)||1));
+        const desired = p.value * count;
+        const applied = Math.floor(Math.min(desired, state.cashPool) / p.value) * p.value;
+        if(applied>0) allocateToEnvelope(env.id, applied);
+        clearBillSelection();
+      } else if (p.type === 'tx'){
+        assignDepositToEnvelope(p.txId, env.id);
+      } else if (p.type === 'env' && p.envelopeId !== env.id){
+        reorderEnvelope(p.envelopeId, env.id);
       }
+    });
+
+    el.querySelector('[data-act="env-delete"]').addEventListener('click', (e) => {
+      e.stopPropagation();
+      deleteEnvelope(env.id);
+    });
+    el.querySelector('[data-act="env-edit"]').addEventListener('click', (e) => {
+      e.stopPropagation();
+      openEnvEditModal(env.id);
+    });
+
+    return el;
+  }
+
+  function openEnvForm(){ const w=$('#envFormWrap'); w.classList.add('open'); w.setAttribute('aria-hidden','false'); $('#newEnvName').focus(); }
+  function closeEnvForm(){
+    const w=$('#envFormWrap'); w.classList.remove('open'); w.setAttribute('aria-hidden','true');
+    ['#newEnvName','#newEnvBudget','#newEnvStartBal'].forEach(s=>{ const el=$(s); if(el) el.value=''; });
+  }
+
+  // Create envelope with starting balance (deducts from unassigned cash)
+  function addEnvelope(name,budget,startBal){
+    if(!name) return alert('Envelope name required');
+    const env = { id:uid('env'), name, budget:Math.max(0,Number(budget)||0), balance:0 };
+    const desired = Math.max(0, Number(startBal)||0);
+    if(desired>0){
+      const applied = Math.min(desired, state.cashPool);
+      env.balance = Math.floor(applied*100)/100;
+      state.cashPool -= env.balance;
+      if(desired>applied){
+        alert(`Only ${fmt(applied)} could be allocated due to limited Unassigned Cash.`);
+      }
+    }
+    state.envelopes.push(env);
+    save(); renderAll(); closeEnvForm();
+  }
+
+  // Edit envelope (name, budget, balance). Balance change adjusts unassigned cash.
+  function openEnvEditModal(id){
+    const env = state.envelopes.find(e=> e.id===id); if(!env) return;
+    editingEnvId = id;
+    $('#editEnvName').value = env.name;
+    $('#editEnvBudget').value = String(env.budget||0);
+    $('#editEnvBalance').value = String(env.balance||0);
+    $('#envEditBackdrop').classList.add('open');
+    setTimeout(()=> $('#editEnvName').focus(), 0);
+  }
+  function closeEnvEditModal(){ editingEnvId = null; $('#envEditBackdrop').classList.remove('open'); }
+
+  function saveEnvEdits(){
+    if(!editingEnvId) return closeEnvEditModal();
+    const env = state.envelopes.find(e=> e.id===editingEnvId); if(!env) return closeEnvEditModal();
+
+    const newName = $('#editEnvName').value.trim() || env.name;
+    const newBudget = Math.max(0, Number($('#editEnvBudget').value)||0);
+    const newBalanceRequested = Math.max(0, Number($('#editEnvBalance').value)||0);
+
+    let delta = Math.round((newBalanceRequested - env.balance)*100)/100;
+    if(delta>0){
+      // Need to pull from unassigned cash
+      if(state.cashPool <= 0){ alert('Not enough Unassigned Cash to increase balance.'); delta = 0; }
+      else if(delta > state.cashPool){ alert(`Only ${fmt(state.cashPool)} available to add. Will apply that amount.`); delta = state.cashPool; }
+      state.cashPool -= delta;
+      env.balance += delta;
+    }else if(delta<0){
+      // Returning to unassigned cash
+      state.cashPool += (-delta);
+      env.balance = newBalanceRequested;
+    }
+
+    env.name = newName;
+    env.budget = newBudget;
+
+    save(); renderAll(); closeEnvEditModal();
+  }
+
+  function allocateToEnvelope(envelopeId, amount){
+    amount=Math.floor(amount*100)/100;
+    if(amount<=0) return;
+    if(state.cashPool<amount) { alert('Not enough unassigned cash'); return; }
+    const env=state.envelopes.find(e=>e.id===envelopeId); if(!env) return;
+    env.balance+=amount; state.cashPool-=amount; save(); renderAll();
+  }
+
+  function moveEnvelopeToCash(envelopeId){
+    const env = state.envelopes.find(x=> x.id===envelopeId); if(!env) return;
+    if(env.balance<=0) return; state.cashPool += env.balance; env.balance = 0; save(); renderAll();
+  }
+
+  // ===== Transactions =====
+  function renderTxForm(){ const wrap = $('#txFormWrap'); if(wrap && wrap.classList.contains('open')) $('#txDate').value = todayISO(); }
+  function renderTxList(){
+    const list=$('#txList'); list.innerHTML='';
+    [...state.transactions].sort((a,b)=> new Date(b.date)-new Date(a.date)).forEach(tx=> list.appendChild(renderTx(tx)));
+    renderTop();
+  }
+
+  function renderTx(tx){
+    const el = document.createElement('div'); el.className='tx';
+    const sign = tx.type==='expense' ? '-' : '+';
+    const paidText = tx.type==='expense' ? ` · paid ${fmt(tx.paidAmount||0)} / ${fmt(tx.amount)}` : '';
+    el.innerHTML = `<div><div><strong>${sign}${fmt(tx.amount)}</strong> · ${tx.merchant||'(No merchant)'}<span class="meta">${paidText}</span></div><div class="meta">${new Date(tx.date).toLocaleDateString()} · id:${tx.id.slice(-5)}</div></div><div style="display:flex; gap:6px;"><button class="btn btn-sm" data-act="delete">Delete</button></div>`;
+
+    if(tx.type==='deposit'){
+      el.draggable = true;
+      el.addEventListener('dragstart', e=> e.dataTransfer.setData('text/plain', JSON.stringify({type:'tx', txId:tx.id})) );
+    }else{
+      el.addEventListener('dragover', e=>{ e.preventDefault(); el.classList.add('dragover'); });
+      el.addEventListener('dragleave', ()=> el.classList.remove('dragover'));
+      el.addEventListener('drop', e=>{
+        e.preventDefault(); el.classList.remove('dragover');
+        const p=parseDragData(e); if(!p) return;
+        if(p.type==='bill'){
+          const count = Math.max(1, Math.floor(Number(p.count)||1));
+          payTransactionWithBills(tx.id, p.value*count);
+          clearBillSelection();
+        } else if(p.type==='env'){
+          payTransactionWithEnvelope(tx.id, p.envelopeId);
+        }
+      });
+    }
+    el.querySelector('[data-act="delete"]').addEventListener('click', ()=> deleteTx(tx.id));
+    return el;
+  }
+
+  function addTxFromForm(){
+    const date=$('#txDate').value||todayISO();
+    const merchant=$('#txMerchant').value.trim();
+    const type=$('#txType').value;
+    const amount=Number($('#txAmount').value||0);
+    if(amount<=0) return alert('Amount must be > 0');
+    const tx={ id:uid('tx'), date, merchant, amount, type, paidAmount: type==='expense'? 0: undefined };
+    state.transactions.push(tx); save(); renderAll(); closeTxForm();
+  }
+
+  function deleteTx(id){
+    const i=state.transactions.findIndex(t=>t.id===id);
+    if(i<0) return; state.transactions.splice(i,1); save(); renderAll();
+    const card = document.getElementById('bankCard');
+    if(card){ card.animate([{boxShadow:'0 0 0 0 rgba(128,226,126,0.0)'},{boxShadow:'0 0 0 6px rgba(128,226,126,0.15)'},{boxShadow:'0 0 0 0 rgba(128,226,126,0.0)'}],{duration:450, easing:'ease-out'}); }
+  }
+
+  // ===== Money & selection =====
+  function parseDragData(e){ try{ return JSON.parse(e.dataTransfer.getData('text/plain')); }catch{ return null; } }
+
+  function renderPool(){
+    $('#pool-amount').textContent = fmt(state.cashPool);
+    const b=$('#bills'); b.innerHTML='';
+    const count=Math.floor(state.cashPool/state.denom);
+    const max=20;
+    const ids=[];
+    for(let i=0;i<Math.min(count,max);i++){ const bill=makeBill(state.denom,i); b.appendChild(bill); ids.push(bill.dataset.billId); }
+    if(count>max){ const s=document.createElement('span'); s.className='more-count'; s.textContent = `+${count-max} more`; b.appendChild(s);}
+    // prune selection of any bills not re-rendered
+    for(const id of [...selectedBills]){ if(!ids.includes(id)) selectedBills.delete(id); }
+    updateSelectionPill();
+  }
+
+  function makeBill(value, index){
+    const el=document.createElement('div'); el.className=`bill bill-${value}`; el.draggable=true; el.dataset.value=String(value);
+    el.dataset.billId = uid('bill');
+    el.dataset.index = String(index);
+    const serial=`NV${String(Math.floor(Math.random()*1e8)).padStart(8,'0')}`;
+    el.innerHTML=`<span class="note-corner tl">$${value}</span><span class="note-center">$${value}</span><span class="note-corner br">$${value}</span><span class="seal">NV</span><span class="serial">${serial}</span><span class="ribbon"></span>`;
+
+    // click to toggle selection (Shift = range)
+    el.addEventListener('click', (e)=>{
+      const id = el.dataset.billId;
+      const idx = Number(el.dataset.index||0);
+      if(e.shiftKey && lastClickedBillIndex!=null){
+        const all = $$('#bills .bill');
+        const [a,b] = [lastClickedBillIndex, idx].sort((x,y)=>x-y);
+        for(let i=a;i<=b;i++){
+          const node = all[i]; if(!node) continue;
+          selectedBills.add(node.dataset.billId);
+          node.classList.add('selected');
+        }
+      }else{
+        if(selectedBills.has(id)){ selectedBills.delete(id); el.classList.remove('selected'); }
+        else { selectedBills.add(id); el.classList.add('selected'); }
+        lastClickedBillIndex = idx;
+      }
+      updateSelectionPill();
+    });
+
+    el.addEventListener('dragstart', e=>{
+      if(!selectedBills.has(el.dataset.billId)){
+        clearBillSelection(false);
+        selectedBills.add(el.dataset.billId);
+        el.classList.add('selected');
+      }
+      const count = selectedBills.size || 1;
+      e.dataTransfer.setData('text/plain', JSON.stringify({type:'bill', value:value, count}));
+      try{
+        const di = document.createElement('canvas');
+        di.width = 160; di.height = 44;
+        const ctx = di.getContext('2d');
+        ctx.fillStyle = '#0b1730'; ctx.fillRect(0,0,160,44);
+        ctx.strokeStyle='#6cb6ff'; ctx.strokeRect(0,0,160,44);
+        ctx.fillStyle='#cfe0ff'; ctx.font='bold 14px Roboto, Arial';
+        ctx.fillText(`$${value} × ${count} = $${value*count}`, 8, 26);
+        e.dataTransfer.setDragImage(di, 10, 22);
+      }catch{}
+    });
+
+    if(selectedBills.has(el.dataset.billId)) el.classList.add('selected');
+    return el;
+  }
+
+  function updateSelectionPill(){ $('#selCountPill').textContent = `Selected: ${selectedBills.size}`; }
+  function clearBillSelection(updateDom=true){
+    if(updateDom){ $$('#bills .bill.selected').forEach(b=> b.classList.remove('selected')); }
+    selectedBills.clear(); lastClickedBillIndex=null; updateSelectionPill();
+  }
+
+  function setupDrops(){
+    const tray = $('#billTray');
+    const panel = $('#moneyPanel');
+    ['dragenter','dragover'].forEach(ev => {
+      tray.addEventListener(ev, e=>{ e.preventDefault(); tray.classList.add('drop-active'); });
+      panel.addEventListener(ev, e=>{ e.preventDefault(); });
+    });
+    tray.addEventListener('dragleave', ()=> tray.classList.remove('drop-active'));
+    tray.addEventListener('drop', e=>{
+      e.preventDefault(); tray.classList.remove('drop-active');
+      const p=parseDragData(e); if(!p) return;
+      if(p.type==='tx') convertDepositToCash(p.txId);
+      if(p.type==='env') moveEnvelopeToCash(p.envelopeId);
+      if(p.type==='bill'){ clearBillSelection(); }
+    });
+    panel.addEventListener('drop', e=>{
+      if(e.target && (e.target.closest && e.target.closest('#billTray'))) return;
+      e.preventDefault(); const p=parseDragData(e); if(!p) return;
+      if(p.type==='tx') convertDepositToCash(p.txId);
+      if(p.type==='env') moveEnvelopeToCash(p.envelopeId);
+      if(p.type==='bill'){ clearBillSelection(); }
     });
   }
 
-  el.querySelector('[data-act="delete"]').addEventListener('click', () => deleteTx(tx.id));
-  return el;
-}
+  function convertDepositToCash(txId){
+    const tx = state.transactions.find(t=>t.id===txId); if(!tx) return;
+    if(tx.type!=='deposit'){ alert('Only deposit (positive) transactions can be converted here.'); return; }
+    state.cashPool += tx.amount; state.archived.deposits += tx.amount;
+    state.transactions = state.transactions.filter(t=>t.id!==txId);
+    save(); renderAll();
+  }
+
+  function assignDepositToEnvelope(txId, envId){
+    const tx = state.transactions.find(t => t.id === txId);
+    const env = state.envelopes.find(e => e.id === envId);
+    if(!tx || tx.type !== 'deposit' || !env) return;
+    env.balance += tx.amount;
+    state.archived.deposits += tx.amount;
+    state.transactions = state.transactions.filter(t => t.id !== txId);
+    save(); renderAll();
+  }
+
+  function payTransactionWithBills(txId, bundle){
+    const tx = state.transactions.find(t=>t.id===txId);
+    if(!tx || tx.type!=='expense') return;
+    if(state.cashPool <= 0) { alert('Not enough unassigned cash.'); return; }
+    const remaining = tx.amount - (tx.paidAmount||0);
+    const applied = Math.floor(Math.min(remaining, bundle, state.cashPool) * 100) / 100;
+    if(applied <= 0) return;
+    state.cashPool -= applied;
+    tx.paidAmount = (tx.paidAmount||0) + applied;
+    if(tx.paidAmount >= tx.amount - 1e-6){
+      state.archived.expenses += tx.amount;
+      state.transactions = state.transactions.filter(t=>t.id!==txId);
+    }
+    save(); renderAll();
+  }
+
+  function payTransactionWithEnvelope(txId, envId){
+    const tx = state.transactions.find(t => t.id === txId);
+    const env = state.envelopes.find(e => e.id === envId);
+    if(!tx || tx.type !== 'expense') return;
+    if(!env || env.balance <= 0) return alert('Envelope is empty');
+    const remaining = tx.amount - (tx.paidAmount || 0);
+    const payment = Math.min(remaining, env.balance);
+    env.balance -= payment;
+    tx.paidAmount = (tx.paidAmount || 0) + payment;
+    if(tx.paidAmount >= tx.amount - 0.0001){
+      state.archived.expenses += tx.amount;
+      state.transactions = state.transactions.filter(t => t.id !== txId);
+    }
+    save(); renderAll();
+  }
+
+  // ===== App State Export/Import =====
+  function download(filename, text){
+    const blob = new Blob([text], {type: 'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url; a.download=filename; a.style.display='none';
+    document.body.appendChild(a); a.click();
+    setTimeout(()=>{ URL.revokeObjectURL(url); a.remove(); }, 0);
+  }
+  function exportData(){ download(`nvelopes-${new Date().toISOString().replace(/[:.]/g,'-')}.json`, JSON.stringify(state,null,2)); }
+  function importData(){
+    const inp=document.createElement('input'); inp.type='file'; inp.accept='application/json';
+    inp.onchange=()=>{ const f=inp.files?.[0]; if(!f) return;
+      const r=new FileReader();
+      r.onload=()=>{ try{
+        state=JSON.parse(r.result);
+        if(!state.archived) state.archived={deposits:0,expenses:0};
+        if(typeof state.bankStarting!=='number') state.bankStarting=0;
+        if(!Array.isArray(state.envelopes)) state.envelopes=[];
+        if(!Array.isArray(state.transactions)) state.transactions=[];
+        if(!state.denom) state.denom = 20;
+        save(); renderAll();
+      }catch{ alert('Invalid file'); } };
+      r.readAsText(f);
+    }; inp.click();
+  }
+
+  // ===== Bank Modal =====
+  function openBankModal(){ const bd=$('#bankModalBackdrop'); const input=$('#bankStartInput'); if(!bd||!input) return; input.value = String(state.bankStarting||0); bd.classList.add('open'); setTimeout(()=> input.focus(), 0); }
+  function closeBankModal(){ const bd=$('#bankModalBackdrop'); if(bd) bd.classList.remove('open'); }
+  function saveBankStarting(){ const v = Number($('#bankStartInput').value); if(!Number.isFinite(v) || v < 0){ alert('Please enter a valid non-negative number.'); return; } state.bankStarting = Math.round(v*100)/100; save(); closeBankModal(); renderAll(); }
+
+  // Tx form controls
+  function openTxForm(){ const wrap=$('#txFormWrap'); wrap.classList.add('open'); wrap.setAttribute('aria-hidden','false'); $('#txDate').value=todayISO(); $('#txMerchant').focus(); }
+  function closeTxForm(){ const wrap=$('#txFormWrap'); wrap.classList.remove('open'); wrap.setAttribute('aria-hidden','true'); ['#txDate','#txMerchant','#txAmount'].forEach(s=>{ const el=$(s); if(el) el.value=''; }); }
+
+  // ===== Excel/CSV Import =====
+  const ACCEPTED_TYPES=['xlsx','xls','csv'];
+  const COL_ALIASES={date:['date','posted date','transaction date','time'], merchant:['merchant','description','name','memo','payee'], amount:['amount','amt','value','total'], type:['type','txn type','transaction type']};
+  const normalizeHeader=h=>String(h||'').trim().toLowerCase();
+  const findCol=(map,key)=>{const wanted=COL_ALIASES[key]; for(const k of Object.keys(map)){ if(wanted.includes(k)) return map[k]; } return null;};
+  function parseExcelDate(v){ if(v==null||v==='') return todayISO(); if(v instanceof Date) return v.toISOString().slice(0,10); if(typeof v==='number'){ const epoch=new Date(Date.UTC(1899,11,30)); const ms=v*86400000; const d=new Date(epoch.getTime()+ms); return d.toISOString().slice(0,10);} const t=String(v).trim(); const tryDirect=new Date(t); if(!isNaN(tryDirect)) return tryDirect.toISOString().slice(0,10); return todayISO(); }
+  const coerceAmount=a=>{ if(a==null||a==='') return NaN; let s=String(a).replace(/[$,\s]/g,''); const num=Number(s); return Number.isFinite(num)?num:NaN; };
+  function decideType(typeCell, amount){ const t=String(typeCell||'').trim().toLowerCase(); if(t==='expense'||t==='debit'||t==='withdrawal'||t==='payment') return 'expense'; if(t==='deposit'||t==='credit'||t==='refund') return 'deposit'; if(Number.isFinite(amount)) return amount<0?'expense':'deposit'; return 'expense'; }
+  async function importExcelOrCsv(file){
+    const ext=file.name.split('.').pop().toLowerCase();
+    if(!ACCEPTED_TYPES.includes(ext)) return alert('Please select an .xlsx, .xls, or .csv file.');
+    if(ext==='csv'){ const text=await file.text(); return importCsv(text); }
+    const data=await file.arrayBuffer();
+    const wb=XLSX.read(data,{type:'array'});
+    const first=wb.Sheets[wb.SheetNames[0]];
+    const rows=XLSX.utils.sheet_to_json(first,{header:1,raw:true});
+    return importRows(rows);
+  }
+  function importCsv(text){
+    const rows=text.split(/\r?\n/).map(r=> r.split(/,(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)/).map(c=> c.replace(/^\"|\"$/g,'')));
+    return importRows(rows);
+  }
+  function importRows(rows){
+    if(!rows||!rows.length) return alert('No rows found.');
+    const header=rows[0].map(normalizeHeader);
+    const headerMap={}; header.forEach((h,i)=> headerMap[h]=i);
+    const idx={date:findCol(headerMap,'date'), merchant:findCol(headerMap,'merchant'), amount:findCol(headerMap,'amount'), type:findCol(headerMap,'type')};
+    if(idx.amount==null) return alert('Missing Amount column. Include a column named Amount/Value/Total.');
+    let added=0, skipped=0;
+    for(let r=1;r<rows.length;r++){
+      const row=rows[r]; if(!row||row.every(c=> String(c||'').trim()==='')) continue;
+      const amountRaw=idx.amount!=null ? row[idx.amount] : null;
+      const amountVal=coerceAmount(amountRaw);
+      if(!Number.isFinite(amountVal)){ skipped++; continue; }
+      const typeCell=idx.type!=null ? row[idx.type] : '';
+      const txnType=decideType(typeCell, amountVal);
+      const merchant=idx.merchant!=null ? String(row[idx.merchant]||'').trim() : '';
+      const dateCell=idx.date!=null ? row[idx.date] : null;
+      const date=parseExcelDate(dateCell);
+      const absAmount=Math.abs(amountVal);
+      const tx={ id:uid('tx'), date, merchant, amount:absAmount, type:txnType, paidAmount: txnType==='expense' ? 0 : undefined };
+      state.transactions.push(tx); added++;
+    }
+    save(); renderAll(); alert(`Imported ${added} transaction(s).${skipped?` Skipped ${skipped} row(s).`:''}`);
+  }
+
+  // ===== Events =====
+  $('#toggleEnvForm').addEventListener('click', ()=>{ const wrap=$('#envFormWrap'); wrap.classList.contains('open')? closeEnvForm() : openEnvForm(); });
+  $('#addEnvelopeConfirm').addEventListener('click', ()=>{
+    addEnvelope(
+      $('#newEnvName').value.trim(),
+      Number($('#newEnvBudget').value||0),
+      Number($('#newEnvStartBal').value||0)
+    );
+  });
+  $('#cancelEnvForm').addEventListener('click', closeEnvForm);
+
+  $('#envEditCancel').addEventListener('click', closeEnvEditModal);
+  $('#envEditSave').addEventListener('click', saveEnvEdits);
+
+  $('#toggleTxForm').addEventListener('click', ()=>{ const wrap=$('#txFormWrap'); wrap.classList.contains('open')? closeTxForm() : openTxForm(); });
+  $('#addTxConfirm').addEventListener('click', addTxFromForm);
+  $('#cancelTxForm').addEventListener('click', closeTxForm);
+
+  $('#exportBtn').addEventListener('click', exportData);
+  $('#importBtn').addEventListener('click', importData);
+  $('#resetBtn').addEventListener('click', ()=>{ if(!confirm('Reset demo and clear all data?')) return; state=structuredClone(DEFAULT_STATE); save(); clearBillSelection(); renderAll(); });
+
+  $('#setBankBtn').addEventListener('click', openBankModal);
+  $('#bankCard').addEventListener('click', openBankModal);
+  $('#bankCancel').addEventListener('click', closeBankModal);
+  $('#bankSave').addEventListener('click', saveBankStarting);
+
+  document.querySelector('#denomControls').addEventListener('click', e=>{
+    const btn=e.target.closest('button'); if(!btn) return;
+    const d=btn.dataset.denom;
+    if(d){ state.denom=Number(d); save(); clearBillSelection(); renderPool(); return; }
+  });
+  $('#create-cash').addEventListener('click', ()=>{ const n=Number(prompt('Create cash in Unassigned', '100'))||0; state.cashPool+=Math.max(0,n); save(); clearBillSelection(); renderAll(); });
+  $('#delete-cash').addEventListener('click', ()=>{ const n=Number(prompt('Delete cash from Unassigned', '50'))||0; if(state.cashPool<n) return alert('Not enough unassigned cash'); state.cashPool-=n; save(); clearBillSelection(); renderAll(); });
+
+  $('#selClearBtn').addEventListener('click', ()=> clearBillSelection());
+
+  $('#excelImportBtn').addEventListener('click', ()=> $('#excelFile').click());
+  $('#excelFile').addEventListener('change', async (e)=>{ const file=e.target.files?.[0]; if(!file) return; await importExcelOrCsv(file); e.target.value=''; });
+
+  document.addEventListener('keydown', e=>{
+    if(e.key==='Escape'){
+      const bd=$('#bankModalBackdrop'); if(bd && bd.classList.contains('open')) closeBankModal();
+      const txOpen=$('#txFormWrap').classList.contains('open'); const envOpen=$('#envFormWrap').classList.contains('open');
+      if(txOpen) closeTxForm(); if(envOpen) closeEnvForm();
+      clearBillSelection();
+      closeEnvEditModal();
+    }
+  });
+
+  // expose minimal helpers for debugging
+  window.__nvelopes = { state, save, renderAll };
+
+  // Boot
+  renderAll();
+})();
 </script>
-
-
-<script>
-// NEW: assign a deposit directly to an envelope (bypasses cashPool)
-function assignDepositToEnvelope(txId, envId){
-  const tx = state.transactions.find(t => t.id === txId);
-  const env = state.envelopes.find(e => e.id === envId);
-  if(!tx || tx.type !== 'deposit' || !env) return;
-  env.balance += tx.amount;                 // fund envelope
-  state.archived.deposits += tx.amount;     // mark as satisfied for bank math
-  state.transactions = state.transactions.filter(t => t.id !== txId); // remove tx
-  save(); renderAll();
-}
-</script>
-
-
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Nvelopes • R13</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-  <style>
-    /* ... keep all your existing R12 CSS ... */
-
-    /* NEW for R13: inline delete button on envelopes */
-    .env .actions-inline {
-      margin-top:8px;
-      display:flex;
-      justify-content:flex-end;
-      gap:6px;
-    }
-  </style>
-</head>
-<body>
-  <!-- (everything from your R12 layout stays the same) -->
-
-  <script>
-    /* --- keep all your existing R12 JS state, functions, renderAll(), etc. --- */
-
-    // NEW: delete an envelope (R13)
-    function deleteEnvelope(envelopeId){
-      const env = state.envelopes.find(e => e.id === envelopeId);
-      if(!env) return;
-      if((env.balance||0) > 0){
-        const ok = confirm(`"${env.name}" still has ${fmt(env.balance)}.\nOK = Move to Unassigned & delete\nCancel = Keep envelope`);
-        if(!ok) return;
-        state.cashPool += env.balance;
-      }
-      state.envelopes = state.envelopes.filter(e => e.id !== envelopeId);
-      save(); renderAll();
-    }
-
-    // Override renderEnv to include Delete button
-    function renderEnv(env){
-      const el = document.createElement('div');
-      el.className='env';
-      el.setAttribute('aria-label', `${env.name}, ${fmt(env.balance)} of ${fmt(env.budget)}`);
-      el.draggable = true;
-      el.dataset.dragtype = 'env';
-      el.dataset.envelopeId = env.id;
-
-      el.innerHTML = `
-        <div class="stamp" aria-hidden="true"></div>
-        <div class="window">
-          <div class="name">${env.name}</div>
-          <div class="meta">${fmt(env.balance)} / ${fmt(env.budget)}</div>
-        </div>
-        <div class="tape"><div class="bar" style="width:${clamp((env.balance/env.budget)*100,0,100)}%"></div></div>
-        <div class="actions-inline">
-          <button class="btn btn-sm" data-act="env-delete" title="Delete envelope">Delete</button>
-        </div>
-      `;
-
-      // keep drag/drop behaviors
-      el.addEventListener('dragstart', e => {
-        e.dataTransfer.setData('text/plain', JSON.stringify({type:'env', envelopeId:env.id}));
-      });
-      el.addEventListener('dragover', e => { e.preventDefault(); el.classList.add('dragover'); });
-      el.addEventListener('dragleave', () => el.classList.remove('dragover'));
-      el.addEventListener('drop', e => {
-        e.preventDefault();
-        el.classList.remove('dragover');
-        const p = parseDragData(e);
-        if(p?.type === 'bill'){
-          allocateToEnvelope(env.id, p.value);
-        } else if (p?.type === 'tx'){
-          assignDepositToEnvelope(p.txId, env.id);
-        }
-      });
-
-      // hook up delete
-      el.querySelector('[data-act="env-delete"]').addEventListener('click', (e) => {
-        e.stopPropagation();
-        deleteEnvelope(env.id);
-      });
-
-      return el;
-    }
-  </script>
 </body>
 </html>
