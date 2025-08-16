@@ -557,3 +557,94 @@ function assignDepositToEnvelope(txId, envId){
 }
 </script>
 
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Nvelopes • R13</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <style>
+    /* ... keep all your existing R12 CSS ... */
+
+    /* NEW for R13: inline delete button on envelopes */
+    .env .actions-inline {
+      margin-top:8px;
+      display:flex;
+      justify-content:flex-end;
+      gap:6px;
+    }
+  </style>
+</head>
+<body>
+  <!-- (everything from your R12 layout stays the same) -->
+
+  <script>
+    /* --- keep all your existing R12 JS state, functions, renderAll(), etc. --- */
+
+    // NEW: delete an envelope (R13)
+    function deleteEnvelope(envelopeId){
+      const env = state.envelopes.find(e => e.id === envelopeId);
+      if(!env) return;
+      if((env.balance||0) > 0){
+        const ok = confirm(`"${env.name}" still has ${fmt(env.balance)}.\nOK = Move to Unassigned & delete\nCancel = Keep envelope`);
+        if(!ok) return;
+        state.cashPool += env.balance;
+      }
+      state.envelopes = state.envelopes.filter(e => e.id !== envelopeId);
+      save(); renderAll();
+    }
+
+    // Override renderEnv to include Delete button
+    function renderEnv(env){
+      const el = document.createElement('div');
+      el.className='env';
+      el.setAttribute('aria-label', `${env.name}, ${fmt(env.balance)} of ${fmt(env.budget)}`);
+      el.draggable = true;
+      el.dataset.dragtype = 'env';
+      el.dataset.envelopeId = env.id;
+
+      el.innerHTML = `
+        <div class="stamp" aria-hidden="true"></div>
+        <div class="window">
+          <div class="name">${env.name}</div>
+          <div class="meta">${fmt(env.balance)} / ${fmt(env.budget)}</div>
+        </div>
+        <div class="tape"><div class="bar" style="width:${clamp((env.balance/env.budget)*100,0,100)}%"></div></div>
+        <div class="actions-inline">
+          <button class="btn btn-sm" data-act="env-delete" title="Delete envelope">Delete</button>
+        </div>
+      `;
+
+      // keep drag/drop behaviors
+      el.addEventListener('dragstart', e => {
+        e.dataTransfer.setData('text/plain', JSON.stringify({type:'env', envelopeId:env.id}));
+      });
+      el.addEventListener('dragover', e => { e.preventDefault(); el.classList.add('dragover'); });
+      el.addEventListener('dragleave', () => el.classList.remove('dragover'));
+      el.addEventListener('drop', e => {
+        e.preventDefault();
+        el.classList.remove('dragover');
+        const p = parseDragData(e);
+        if(p?.type === 'bill'){
+          allocateToEnvelope(env.id, p.value);
+        } else if (p?.type === 'tx'){
+          assignDepositToEnvelope(p.txId, env.id);
+        }
+      });
+
+      // hook up delete
+      el.querySelector('[data-act="env-delete"]').addEventListener('click', (e) => {
+        e.stopPropagation();
+        deleteEnvelope(env.id);
+      });
+
+      return el;
+    }
+  </script>
+</body>
+</html>
