@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Nvelopes • R19</title>
+<title>Nvelopes • R24</title>
 
 <!-- Cache-bust to ?v=... -->
 <script>
 (function(){
-  const BUILD='r19-softoverdraft-2025-08-16';
+  const BUILD='r24-current-bank-balance-hide-log-2025-08-25';
   const u=new URL(location.href);
   if(u.searchParams.get('v')!==BUILD){u.searchParams.set('v',BUILD);location.replace(u.toString());}
 })();
@@ -17,31 +17,31 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js?v=r19"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js?v=r24"></script>
 
 <style>
 :root{ --primary:#80e27e; --on-primary:#032106; --surface:#0e1116; --surface-2:#141922; --surface-3:#10151c; --text:#e6ebf2; --muted:#aab4c3; --outline:#26303a; --danger:#ff6b6b; --danger-2:#ffb3b3; --radius:14px; --radius-lg:18px; --shadow-1:0 1px 2px rgba(0,0,0,.45), 0 2px 6px rgba(0,0,0,.35);} *{box-sizing:border-box}
 html,body{height:100%}
 body{margin:0; font-family:Roboto, system-ui, -apple-system, Segoe UI, Helvetica, Arial; color:var(--text); background:linear-gradient(180deg,#0b0d11 0%, #0a0c0f 50%, #080a0d 100%);}
-.app{max-width:1280px; margin:0 auto; padding:16px; display:grid; gap:16px; grid-template-rows:auto auto 1fr; min-height:100dvh}
+.app{max-width:1400px; margin:0 auto; padding:16px; display:grid; gap:16px; grid-template-rows:auto auto 1fr; min-height:100dvh}
 .appbar{display:flex; align-items:center; gap:12px; padding:12px 16px; background:var(--surface-2); border:1px solid var(--outline); border-radius:var(--radius-lg); box-shadow:var(--shadow-1);}
 .logo{width:40px; height:40px; border-radius:12px; display:grid; place-items:center; font-weight:900; background:linear-gradient(135deg,#7bd88f,#6cb6ff); color:#041e0b;}
 .brand{display:grid;} .brand .title{font-weight:900;} .brand .sub{color:var(--muted); font-size:12px;}
-.tray{margin-left:auto; display:flex; gap:8px;}
+.tray{margin-left:auto; display:flex; gap:8px; flex-wrap:wrap}
 .btn{appearance:none; border:1px solid var(--outline); background:#0f141a; color:var(--text); padding:10px 12px; border-radius:12px; font-weight:700; cursor:pointer;}
 .btn-sm{padding:8px 10px; font-weight:600}
 .btn-primary{background:var(--primary); color:var(--on-primary); border-color:transparent}
 .btn-tonal{background:#1a2a1e; color:#c8f3c7; border-color:#2c3b2e}
 .btn-danger{background:linear-gradient(180deg,#3a1111,#240a0a); color:#ffdede; border-color:#4a1b1b}
-.input,.select{background:#0f141a; color:var(--text); border:1px solid var(--outline); border-radius:12px; padding:10px 12px}
+.input,.select,.textarea{background:#0f141a; color:var(--text); border:1px solid var(--outline); border-radius:12px; padding:10px 12px}
 
-.stats{display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px;}
+.stats{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px;}
 .card{background:var(--surface-2); border:1px solid var(--outline); border-radius:var(--radius-lg); box-shadow:var(--shadow-1); padding:14px;}
 .card h4{margin:0 0 6px 0; font-size:12px; text-transform:uppercase; letter-spacing:.4px; color:var(--muted)}
 .value{font-size:26px; font-weight:900}
 .subvalue{margin-top:4px; font-size:12px; color:var(--muted)}
 
-.layout{display:grid; grid-template-columns:1fr .9fr 1fr; gap:16px; align-items:start;}
+.layout{display:grid; grid-template-columns:1.1fr .9fr 1fr; gap:16px; align-items:start;}
 .panel{background:var(--surface-2); border:1px solid var(--outline); border-radius:var(--radius-lg); box-shadow:var(--shadow-1); padding:12px; display:flex; flex-direction:column; gap:12px; min-height:520px;}
 .panel h3{margin:4px 0; font-size:16px}
 
@@ -98,12 +98,12 @@ body{margin:0; font-family:Roboto, system-ui, -apple-system, Segoe UI, Helvetica
 .bill .seal{position:absolute; width:28px; height:28px; border-radius:50%; display:grid; place-items:center; font-weight:800; font-size:12px; opacity:.8; right:8px; top:8px; text-shadow:0 1px 0 rgba(0,0,0,.2)}
 .bill .serial{position:absolute; left:8px; bottom:6px; font-family:monospace; font-size:10px; letter-spacing:.5px; opacity:.85}
 .bill .ribbon{position:absolute; top:-6px; bottom:-6px; width:6px; left:57%; filter:blur(.2px); opacity:.55}
-.bill::before{content:""; position:absolute; inset:0; background:radial-gradient(200px 50px at 50% -20%, rgba(255,255,255,.14), transparent 60%), repeating-linear-gradient(90deg, rgba(255,255,255,.06), rgba(255,255,255,.06) 1px, transparent 1px, transparent 4px); pointer-events:none; mix-blend-mode:overlay}
+.bill::before{content:""; position:absolute; inset:0; background:radial-gradient(200px 50px at 50% -20%, rgba(255,255,255,.14), transparent 60%), repeating-linear-gradient(90deg, rgba(255,255,255,.06), rgba(255,255,255,.06) 1px, transparent 1px 4px); pointer-events:none; mix-blend-mode:overlay}
 .bill::after{content:""; position:absolute; inset:0; background:repeating-conic-gradient(from 0deg, rgba(255,255,255,.04) 0 10deg, transparent 10deg 20deg); opacity:.5; pointer-events:none; mix-blend-mode:overlay}
 
 .bill-1{background:linear-gradient(180deg,#1f2f1f,#161f16); border-color:#2b3b2b; color:#e8f5e9}
 .bill-1 .seal{background:#2e462e; color:#e8f5e9}
-.bill-5{background:linear-gradient(180deg,#2a2335,#201a2b); border-color:#3d3350; color:#e9e0ff}
+.bill-5{background:linear-gradient(180deg,#2a2335,#201a0b); border-color:#3d3350; color:#e9e0ff}
 .bill-5 .seal{background:#473761; color:#f2eaff}
 .bill-10{background:linear-gradient(180deg,#3a2a18,#2a1e12); border-color:#533a22; color:#ffe7c7}
 .bill-10 .seal{background:#5a3b1f; color:#ffe7c7}
@@ -120,6 +120,7 @@ body{margin:0; font-family:Roboto, system-ui, -apple-system, Segoe UI, Helvetica
 .selection-pill{font-size:12px; color:#cfe0ff; background:#0b1730; border:1px solid #1b2b52; padding:4px 8px; border-radius:999px}
 .selection-actions{display:flex; gap:6px; align-items:center}
 
+/* TRANSACTIONS */
 .tx-header{display:flex; align-items:center; justify-content:space-between; gap:8px}
 .tx-actions{display:flex; gap:8px; align-items:center; flex-wrap:wrap}
 .tx-form-wrap{display:none}
@@ -131,33 +132,48 @@ body{margin:0; font-family:Roboto, system-ui, -apple-system, Segoe UI, Helvetica
 .tx .meta{color:var(--muted); font-size:12px}
 .tx.dragover{outline:2px dashed var(--primary); outline-offset:6px}
 
+/* Activity Log */
+.log{display:grid; gap:8px; overflow:auto; max-height:65vh; padding-right:4px}
+.log-item{border:1px solid var(--outline); border-radius:12px; padding:8px; background:var(--surface-3); font-size:13px; display:flex; justify-content:space-between; gap:10px}
+.log-item .when{color:var(--muted); font-variant-numeric:tabular-nums}
+.log-item.warn{border-color:#5a3a2a}
+.log-item.err{border-color:#5a2a2a}
+
 /* Modal */
 .modal-backdrop{position:fixed; inset:0; background:rgba(0,0,0,.55); display:none; align-items:center; justify-content:center; z-index:50}
 .modal-backdrop.open{display:flex}
-.modal{width:min(520px,90vw); background:var(--surface-2); border:1px solid var(--outline); border-radius:16px; box-shadow:var(--shadow-1); padding:16px}
+.modal{width:min(560px,92vw); background:var(--surface-2); border:1px solid var(--outline); border-radius:16px; box-shadow:var(--shadow-1); padding:16px}
 .modal h4{margin:0 0 10px 0}
 .modal .row{display:flex; gap:10px; align-items:flex-end; flex-wrap:wrap}
 .modal .actions{display:flex; gap:8px; justify-content:flex-end; margin-top:12px}
 
-@media (max-width:1100px){.layout{grid-template-columns:1fr} .env-list,.tx-list{max-height:none} .tray-combined{position:static} .bill{width:44vw; max-width:220px; height:72px}}
+@media (max-width:1200px){
+  .layout{grid-template-columns:1fr}
+  .env-list,.tx-list,.log{max-height:none}
+  .tray-combined{position:static}
+  .bill{width:44vw; max-width:220px; height:72px}
+}
 </style>
 </head>
 <body>
 <div class="app" id="app">
   <section class="appbar">
     <div class="logo">N</div>
-    <div class="brand"><span class="title">Nvelopes</span><span class="sub">R19</span></div>
+    <div class="brand"><span class="title">Nvelopes</span><span class="sub">R24</span></div>
     <div class="tray">
-      <button id="exportBtn" class="btn btn-tonal btn-sm">Export</button>
-      <button id="importBtn" class="btn btn-sm">Import</button>
+      <button id="exportBtn" class="btn btn-tonal btn-sm">Export Profile</button>
+      <button id="importBtn" class="btn btn-sm">Import Profile</button>
       <button id="setBankBtn" class="btn btn-sm">Set Bank</button>
+      <button id="toggleLogBtn" class="btn btn-sm">Show Activity Log</button>
       <button id="resetBtn" class="btn btn-danger btn-sm">Reset</button>
     </div>
   </section>
 
+  <!-- Middle card is Unassigned Cash -->
   <section class="stats">
     <div class="card"><h4>Envelope Balance</h4><div id="stat-env-balance" class="value">$0.00</div></div>
-    <div class="card" id="bankCard" style="cursor:pointer"><h4>Bank Balance</h4><div id="stat-bank-balance" class="value">$0.00</div><div class="subvalue">Starting: <span id="stat-bank-start">$0.00</span></div></div>
+    <div class="card"><h4>Unassigned Cash</h4><div id="pool-amount" class="value">$0.00</div></div>
+    <div class="card" id="bankCard" style="cursor:pointer"><h4>Bank Balance</h4><div id="stat-bank-balance" class="value">$0.00</div></div>
   </section>
 
   <section class="layout">
@@ -166,7 +182,7 @@ body{margin:0; font-family:Roboto, system-ui, -apple-system, Segoe UI, Helvetica
       <div class="env-header">
         <h3>Envelopes</h3>
         <div class="env-actions">
-          <button id="toggleEnvForm" class="btn btn-primary btn-sm">Add</button>
+          <button id="toggleEnvForm" class="btn btn-primary btn-sm">Add Envelope</button>
         </div>
       </div>
 
@@ -175,16 +191,16 @@ body{margin:0; font-family:Roboto, system-ui, -apple-system, Segoe UI, Helvetica
         <div class="env-form">
           <div><label>Name</label><input id="newEnvName" class="input" placeholder="New envelope name" /></div>
           <div><label>Budget ($)</label><input id="newEnvBudget" class="input" type="number" inputmode="decimal" step="0.01" placeholder="0.00" /></div>
-          <div><label>Starting Balance ($)</label><input id="newEnvStartBal" class="input" type="number" inputmode="decimal" step="0.01" placeholder="0.00" /></div>
+          <div><label>Starting Balance ($)</label><input id="newEnvStartBal" class="input" type="number" inputmode="decimal" step="0.01" placeholder="e.g. -100.00 allowed" /></div>
           <div style="display:flex; gap:8px; align-items:flex-end;">
-            <button id="addEnvelopeConfirm" class="btn btn-primary">Add</button>
-            <button id="cancelEnvForm" class="btn">Cancel</button>
+            <button id="addEnvelopeConfirm" class="btn btn-primary">Create Envelope</button>
+            <button id="cancelEnvForm" class="btn">Close</button>
           </div>
         </div>
       </div>
 
       <div class="env-list" id="envList"></div>
-      <div id="envEmpty" class="empty-env" style="display:none">No envelopes yet. Click <b>Add</b> to create your first envelope.</div>
+      <div id="envEmpty" class="empty-env" style="display:none">No envelopes yet. Click <b>Add Envelope</b> to create your first one.</div>
     </div>
 
     <!-- MONEY TABLE -->
@@ -192,17 +208,10 @@ body{margin:0; font-family:Roboto, system-ui, -apple-system, Segoe UI, Helvetica
       <div class="money-head">
         <h3>Money Table (Unassigned Cash)</h3>
         <div class="money-stats">
-          <strong id="pool-amount">$0.00</strong>
           <div class="selection-actions">
             <span class="selection-pill" id="selCountPill" title="Selected bills in tray">Selected: 0</span>
             <button id="selClearBtn" class="btn btn-sm" title="Clear selection">Clear</button>
           </div>
-        </div>
-      </div>
-
-      <div id="billTray" class="tray-combined" aria-label="Money tray. Drop deposits or envelopes here.">
-        <div class="tray-row">
-          <div class="tray-instructions"><span>Drop</span><span class="tag">Deposits</span><span>or</span><span class="tag">Envelopes</span><span>here →</span></div>
           <div id="denomControls">
             <span style="color:var(--muted); font-size:12px">Denominations:</span>
             <button class="btn btn-sm" data-denom="1">$1</button>
@@ -214,6 +223,12 @@ body{margin:0; font-family:Roboto, system-ui, -apple-system, Segoe UI, Helvetica
             <button id="create-cash" class="btn btn-tonal btn-sm">Create Cash</button>
             <button id="delete-cash" class="btn btn-sm">Delete Cash</button>
           </div>
+        </div>
+      </div>
+
+      <div id="billTray" class="tray-combined" aria-label="Money tray. Drop deposits or envelopes here.">
+        <div class="tray-row">
+          <div class="tray-instructions"><span>Drop</span><span class="tag">Deposits</span><span>or</span><span class="tag">Envelopes</span><span>here →</span></div>
         </div>
         <div id="bills" class="bills" aria-live="polite"></div>
       </div>
@@ -239,27 +254,39 @@ body{margin:0; font-family:Roboto, system-ui, -apple-system, Segoe UI, Helvetica
           <div><label>Type</label><select id="txType" class="select"><option value="expense">Expense (−)</option><option value="deposit">Deposit (+)</option></select></div>
           <div><label>Amount</label><input id="txAmount" class="input" type="number" inputmode="decimal" step="0.01" placeholder="0.00" /></div>
           <div style="display:flex; gap:8px; align-items:flex-end;">
-            <button id="addTxConfirm" class="btn btn-primary">Add</button>
-            <button id="cancelTxForm" class="btn">Cancel</button>
+            <button id="addTxConfirm" class="btn btn-primary">Add Transaction</button>
+            <button id="cancelTxForm" class="btn">Close</button>
           </div>
         </div>
       </div>
 
       <div class="tx-list" id="txList"></div>
     </div>
+
+    <!-- ACTIVITY LOG (hidden by default) -->
+    <div class="panel" id="logPanel" style="display:none;">
+      <div style="display:flex; justify-content:space-between; align-items:center">
+        <h3>Activity Log</h3>
+        <div style="display:flex; gap:8px;">
+          <button id="clearLogBtn" class="btn btn-sm">Clear Log</button>
+          <!-- Export Log button removed; included in main export -->
+        </div>
+      </div>
+      <div class="log" id="logList"></div>
+    </div>
   </section>
 
   <input id="excelFile" type="file" accept=".xlsx,.xls,.csv" style="display:none" />
 </div>
 
-<!-- Set Bank Modal -->
+<!-- Set Bank Modal (Current Balance) -->
 <div id="bankModalBackdrop" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="bankModalTitle">
   <div class="modal">
-    <h4 id="bankModalTitle">Set Starting Bank Balance</h4>
+    <h4 id="bankModalTitle">Set Current Bank Balance</h4>
     <div class="row">
       <div style="flex:1">
-        <label for="bankStartInput" style="display:block; font-size:12px; color:var(--muted); margin:0 0 4px">Amount (USD)</label>
-        <input id="bankStartInput" class="input" type="number" inputmode="decimal" step="0.01" min="0" placeholder="0.00" />
+        <label for="bankCurrentInput" style="display:block; font-size:12px; color:var(--muted); margin:0 0 4px">Amount (USD)</label>
+        <input id="bankCurrentInput" class="input" type="number" inputmode="decimal" step="0.01" min="0" placeholder="0.00" />
       </div>
     </div>
     <div class="actions">
@@ -284,13 +311,13 @@ body{margin:0; font-family:Roboto, system-ui, -apple-system, Segoe UI, Helvetica
       </div>
       <div>
         <label style="display:block; font-size:12px; color:var(--muted); margin:0 0 4px">Balance ($)</label>
-        <!-- allow negative -->
+        <!-- negative allowed -->
         <input id="editEnvBalance" class="input" type="number" inputmode="decimal" step="0.01" />
       </div>
     </div>
     <div class="actions">
       <button id="envEditCancel" class="btn">Cancel</button>
-      <button id="envEditSave" class="btn btn-primary">Save</button>
+      <button id="envEditSave" class="btn btn-primary">Save Changes</button>
     </div>
   </div>
 </div>
@@ -307,52 +334,78 @@ body{margin:0; font-family:Roboto, system-ui, -apple-system, Segoe UI, Helvetica
   const round2 = (x)=> Math.round(x*100)/100;
 
   // ===== State =====
-  const DEFAULT_STATE = { bankStarting:0, cashPool:0, denom:20, archived:{deposits:0,expenses:0}, envelopes:[], transactions:[] };
-  const STORAGE_KEY = 'nvelopes_r19_edit_storage';
+  // R24 moves from bankStarting+archived deltas to a direct "bankCurrent".
+  const DEFAULT_STATE = { bankCurrent:0, cashPool:0, denom:20, archived:{deposits:0,expenses:0}, envelopes:[], transactions:[], activity:[] };
+  const STORAGE_KEY = 'nvelopes_r24_edit_storage';
   let state = load();
+  let editingEnvId = null;
 
   // selection state for bills (multi-select)
   const selectedBills = new Set();
   let lastClickedBillIndex = null;
 
-  // temp for edit modal
-  let editingEnvId = null;
-
   function load(){
     try{
       const raw = localStorage.getItem(STORAGE_KEY);
-      const s = raw? JSON.parse(raw) : structuredClone(DEFAULT_STATE);
+      let s = raw? JSON.parse(raw) : null;
+
+      if(!s){
+        // Migrate from prior versions if present
+        const prevRaw = localStorage.getItem('nvelopes_r23_edit_storage') || localStorage.getItem('nvelopes_r22_edit_storage');
+        if(prevRaw){
+          try{
+            const p = JSON.parse(prevRaw);
+            const bankCurrentFromPrev = (typeof p.bankStarting==='number'
+              ? (p.bankStarting + (p.archived?.deposits||0) - (p.archived?.expenses||0))
+              : 0);
+            s = {
+              bankCurrent: round2(bankCurrentFromPrev),
+              cashPool: p.cashPool||0,
+              denom: p.denom||20,
+              archived: p.archived||{deposits:0,expenses:0},
+              envelopes: Array.isArray(p.envelopes)?p.envelopes:[],
+              transactions: Array.isArray(p.transactions)?p.transactions:[],
+              activity: Array.isArray(p.activity)?p.activity:[]
+            };
+          }catch{ s = null; }
+        }
+      }
+      if(!s) s = structuredClone(DEFAULT_STATE);
+
+      // Ensure shape
+      if(typeof s.bankCurrent!=='number') s.bankCurrent=0;
       if(!s.archived) s.archived={deposits:0,expenses:0};
-      if(typeof s.bankStarting!=='number') s.bankStarting=0;
       if(!Array.isArray(s.envelopes)) s.envelopes=[];
       if(!Array.isArray(s.transactions)) s.transactions=[];
+      if(!Array.isArray(s.activity)) s.activity=[];
       if(!s.denom) s.denom = 20;
       return s;
     }catch{ return structuredClone(DEFAULT_STATE) }
   }
   function save(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
 
-  // ===== Derived =====
-  const envTotal = () => state.envelopes.reduce((sum,e)=> sum + (e.balance||0), 0);
-  const bankTotal = () => state.bankStarting + state.archived.deposits - state.archived.expenses;
-
-  // ===== Soft-Overdraft helpers =====
-  /** Cover negative envelopes using an incoming amount; returns remainder. */
-  function coverShortfalls(amount){
-    amount = Math.max(0, Number(amount)||0);
-    if(amount<=0) return 0;
-    // sort most negative first
-    const negs = state.envelopes.filter(e=> (e.balance||0) < 0).sort((a,b)=> (a.balance - b.balance)); // e.g., -200 before -50
-    let remaining = amount;
-    for(const env of negs){
-      if(remaining<=0) break;
-      const need = -env.balance;
-      const cover = Math.min(need, remaining);
-      env.balance = round2(env.balance + cover);
-      remaining = round2(remaining - cover);
-    }
-    return remaining; // leftover to cashPool
+  // ===== Activity Log =====
+  function log(message, level='info'){
+    const entry = { id: uid('log'), at: new Date().toISOString(), level, message };
+    state.activity.unshift(entry); // newest first
+    state.activity = state.activity.slice(0,500); // cap
+    save(); if($('#logPanel').style.display!=='none') renderLog();
   }
+  function renderLog(){
+    const list = $('#logList'); list.innerHTML='';
+    if(!state.activity.length){ list.innerHTML = '<div class="log-item"><span>No activity yet.</span><span class="when"></span></div>'; return; }
+    for(const a of state.activity){
+      const el=document.createElement('div');
+      el.className='log-item' + (a.level==='warn'?' warn':a.level==='err'?' err':'');
+      const when = new Date(a.at).toLocaleString();
+      el.innerHTML = `<div>${a.message}</div><div class="when">${when}</div>`;
+      list.appendChild(el);
+    }
+  }
+
+  // ===== Derived =====
+  const envTotal = () => state.envelopes.reduce((sum,e)=> sum + (Number(e.balance)||0), 0);
+  const bankTotal = () => state.bankCurrent; // direct value, set by user
 
   // ===== Render root =====
   function renderAll(){
@@ -363,12 +416,13 @@ body{margin:0; font-family:Roboto, system-ui, -apple-system, Segoe UI, Helvetica
     renderPool();
     setupDrops();
     toggleEnvEmpty();
+    // Activity log is hidden by default; only render when visible
+    if($('#logPanel').style.display!=='none') renderLog();
   }
   function renderTop(){
     $('#stat-env-balance').textContent = fmt(envTotal());
     $('#stat-bank-balance').textContent = fmt(bankTotal());
     $('#pool-amount').textContent = fmt(state.cashPool);
-    const sEl=$('#stat-bank-start'); if(sEl) sEl.textContent=fmt(state.bankStarting);
   }
 
   // ===== Envelopes =====
@@ -389,6 +443,9 @@ body{margin:0; font-family:Roboto, system-ui, -apple-system, Segoe UI, Helvetica
       const ok = confirm(`"${env.name}" still has ${fmt(env.balance)}.\nOK = Move to Unassigned & delete\nCancel = Keep envelope`);
       if(!ok) return;
       state.cashPool = round2(state.cashPool + env.balance);
+      log(`Deleted envelope "${env.name}" and moved ${fmt(env.balance)} to Unassigned.`);
+    } else {
+      log(`Deleted envelope "${env.name}" (zero balance).`);
     }
     state.envelopes = state.envelopes.filter(e => e.id !== envelopeId);
     save(); renderAll();
@@ -427,7 +484,7 @@ body{margin:0; font-family:Roboto, system-ui, -apple-system, Segoe UI, Helvetica
       </div>
       <div class="tape"><div class="bar" style="width:${clamp(((env.balance<=0?0:env.balance)/Math.max(1,env.budget))*100,0,100)}%"></div></div>
       <div class="actions-inline">
-        ${neg ? '<button class="btn btn-sm" data-act="env-cover" title="Cover shortfall">Cover</button>' : ''}
+        ${neg ? '<button class="btn btn-sm" data-act="env-cover" title="Cover shortfall from Unassigned">Cover</button>' : ''}
         <button class="btn btn-sm" data-act="env-edit" title="Edit envelope">Edit</button>
         <button class="btn btn-sm" data-act="env-delete" title="Delete envelope">Delete</button>
       </div>
@@ -482,30 +539,32 @@ body{margin:0; font-family:Roboto, system-ui, -apple-system, Segoe UI, Helvetica
     return el;
   }
 
-  function openEnvForm(){ const w=$('#envFormWrap'); w.classList.add('open'); w.setAttribute('aria-hidden','false'); $('#newEnvName').focus(); }
+  // Show/hide Add Envelope button with form
+  function openEnvForm(){
+    const w=$('#envFormWrap'); w.classList.add('open'); w.setAttribute('aria-hidden','false');
+    const addBtn = $('#toggleEnvForm'); if(addBtn) addBtn.style.display='none';
+    $('#newEnvName').focus();
+  }
   function closeEnvForm(){
     const w=$('#envFormWrap'); w.classList.remove('open'); w.setAttribute('aria-hidden','true');
+    const addBtn = $('#toggleEnvForm'); if(addBtn) addBtn.style.display='';
     ['#newEnvName','#newEnvBudget','#newEnvStartBal'].forEach(s=>{ const el=$(s); if(el) el.value=''; });
   }
 
-  // Create envelope with starting balance (deducts from unassigned cash; starting balance stays non-negative)
-  function addEnvelope(name,budget,startBal){
+  // Create envelope with starting balance EXACTLY as entered (can be negative). Does NOT touch Unassigned Cash.
+  function addEnvelope(){
+    const name=$('#newEnvName').value.trim();
+    const budget=Number($('#newEnvBudget').value||0);
+    let startBal=Number($('#newEnvStartBal').value);
     if(!name) return alert('Envelope name required');
-    const env = { id:uid('env'), name, budget:Math.max(0,Number(budget)||0), balance:0 };
-    const desired = Math.max(0, Number(startBal)||0);
-    if(desired>0){
-      const applied = Math.min(desired, state.cashPool);
-      env.balance = round2(applied);
-      state.cashPool = round2(state.cashPool - env.balance);
-      if(desired>applied){
-        alert(`Only ${fmt(applied)} could be allocated due to limited Unassigned Cash.`);
-      }
-    }
+    if(!Number.isFinite(startBal)) startBal = 0;
+    const env = { id:uid('env'), name, budget:Math.max(0,budget), balance:round2(startBal) };
     state.envelopes.push(env);
+    log(`Created envelope "${env.name}" with budget ${fmt(env.budget)} and starting balance ${fmt(env.balance)}.`);
     save(); renderAll(); closeEnvForm();
   }
 
-  // Edit envelope (name, budget, balance). Balance change interacts with Unassigned based on direction.
+  // Edit envelope (name, budget, balance). Balance change interacts with Unassigned based on direction, manual only.
   function openEnvEditModal(id){
     const env = state.envelopes.find(e=> e.id===id); if(!env) return;
     editingEnvId = id;
@@ -525,29 +584,29 @@ body{margin:0; font-family:Roboto, system-ui, -apple-system, Segoe UI, Helvetica
     const newBudget = Math.max(0, Number($('#editEnvBudget').value)||0);
     const requested = Number($('#editEnvBalance').value);
     if(!Number.isFinite(requested)){ alert('Enter a valid number for Balance.'); return; }
-    const old = env.balance||0;
+
+    const old = Number(env.balance)||0;
     let change = round2(requested - old);
+    let note = '';
 
     if(change > 0){
-      // Increasing envelope: pull from unassigned, clamp to availability
       if(state.cashPool <= 0){ alert('Not enough Unassigned Cash to increase balance.'); change = 0; }
       else if(change > state.cashPool){ alert(`Only ${fmt(state.cashPool)} available to add. Will apply that amount.`); change = state.cashPool; }
       env.balance = round2(old + change);
       state.cashPool = round2(state.cashPool - change);
+      if(change>0) note = ` (moved ${fmt(change)} from Unassigned)`;
     }else if(change < 0){
-      // Decreasing envelope: return only the positive portion we actually remove.
-      // If old>0:
-      //   - requested >=0: refund = old - requested
-      //   - requested < 0: refund = old (we took all positive out)
-      // If old<=0: refund = 0 (moving further negative doesn't add cash)
+      // Reducing balance; only positive portion returns to Unassigned
       let refund = 0;
       if(old > 0){
         refund = (requested >= 0) ? (old - requested) : old;
-      } // else refund stays 0
+      }
       state.cashPool = round2(state.cashPool + refund);
       env.balance = requested;
+      if(refund>0) note = ` (returned ${fmt(refund)} to Unassigned)`;
     }
 
+    log(`Edited envelope "${env.name}" → name "${newName}", budget ${fmt(env.budget)}→${fmt(newBudget)}, balance ${fmt(old)}→${fmt(env.balance)}${note}.`);
     env.name = newName;
     env.budget = newBudget;
 
@@ -562,21 +621,26 @@ body{margin:0; font-family:Roboto, system-ui, -apple-system, Segoe UI, Helvetica
     const add = Math.min(need, state.cashPool);
     env.balance = round2(env.balance + add);
     state.cashPool = round2(state.cashPool - add);
+    log(`Covered shortfall for "${env.name}" by ${fmt(add)} from Unassigned. New balance ${fmt(env.balance)}.`);
     save(); renderAll();
   }
 
   function allocateToEnvelope(envelopeId, amount){
     amount=round2(amount);
     if(amount<=0) return;
-    if(state.cashPool<amount) { alert('Not enough unassigned cash'); return; }
+    if(state.cashPool<amount) { alert('Not enough Unassigned Cash'); return; }
     const env=state.envelopes.find(e=>e.id===envelopeId); if(!env) return;
-    env.balance=round2(env.balance + amount); state.cashPool=round2(state.cashPool - amount); save(); renderAll();
+    env.balance=round2((Number(env.balance)||0) + amount);
+    state.cashPool=round2(state.cashPool - amount);
+    log(`Added ${fmt(amount)} from Unassigned to "${env.name}".`);
+    save(); renderAll();
   }
 
   function moveEnvelopeToCash(envelopeId){
     const env = state.envelopes.find(x=> x.id===envelopeId); if(!env) return;
-    if(env.balance<=0) return; // do nothing for zero/negative
-    state.cashPool = round2(state.cashPool + env.balance);
+    if((Number(env.balance)||0)<=0) return; // do nothing for zero/negative
+    state.cashPool = round2(state.cashPool + Number(env.balance));
+    log(`Moved ${fmt(env.balance)} from "${env.name}" to Unassigned.`);
     env.balance = 0; save(); renderAll();
   }
 
@@ -622,13 +686,18 @@ body{margin:0; font-family:Roboto, system-ui, -apple-system, Segoe UI, Helvetica
     const type=$('#txType').value;
     const amount=Number($('#txAmount').value||0);
     if(amount<=0) return alert('Amount must be > 0');
-    const tx={ id:uid('tx'), date, merchant, amount, type, paidAmount: type==='expense'? 0: undefined };
-    state.transactions.push(tx); save(); renderAll(); closeTxForm();
+    const tx={ id:uid('tx'), date, merchant, amount, type, paidAmount: type==='expense'? 0 : undefined };
+    state.transactions.push(tx);
+    log(`Added ${type==='deposit'?'deposit':'expense'} ${fmt(amount)} · ${merchant||'(No merchant)'} (${date}).`);
+    save(); renderAll(); closeTxForm();
   }
 
   function deleteTx(id){
     const i=state.transactions.findIndex(t=>t.id===id);
-    if(i<0) return; state.transactions.splice(i,1); save(); renderAll();
+    if(i<0) return;
+    const tx=state.transactions[i];
+    state.transactions.splice(i,1); save(); renderAll();
+    log(`Deleted transaction ${tx.type==='deposit'?'+':'-'}${fmt(tx.amount)} · ${tx.merchant||'(No merchant)'} (${tx.date}).`, 'warn');
     const card = document.getElementById('bankCard');
     if(card){ card.animate([{boxShadow:'0 0 0 0 rgba(128,226,126,0.0)'},{boxShadow:'0 0 0 6px rgba(128,226,126,0.15)'},{boxShadow:'0 0 0 0 rgba(128,226,126,0.0)'}],{duration:450, easing:'ease-out'}); }
   }
@@ -644,7 +713,6 @@ body{margin:0; font-family:Roboto, system-ui, -apple-system, Segoe UI, Helvetica
     const ids=[];
     for(let i=0;i<Math.min(count,max);i++){ const bill=makeBill(state.denom,i); b.appendChild(bill); ids.push(bill.dataset.billId); }
     if(count>max){ const s=document.createElement('span'); s.className='more-count'; s.textContent = `+${count-max} more`; b.appendChild(s);}
-    // prune selection of any bills not re-rendered
     for(const id of [...selectedBills]){ if(!ids.includes(id)) selectedBills.delete(id); }
     updateSelectionPill();
   }
@@ -656,7 +724,6 @@ body{margin:0; font-family:Roboto, system-ui, -apple-system, Segoe UI, Helvetica
     const serial=`NV${String(Math.floor(Math.random()*1e8)).padStart(8,'0')}`;
     el.innerHTML=`<span class="note-corner tl">$${value}</span><span class="note-center">$${value}</span><span class="note-corner br">$${value}</span><span class="seal">NV</span><span class="serial">${serial}</span><span class="ribbon"></span>`;
 
-    // click to toggle selection (Shift = range)
     el.addEventListener('click', (e)=>{
       const id = el.dataset.billId;
       const idx = Number(el.dataset.index||0);
@@ -730,20 +797,13 @@ body{margin:0; font-family:Roboto, system-ui, -apple-system, Segoe UI, Helvetica
     });
   }
 
-  // Deposit -> Tray: auto-cover negatives first, then remainder to cash
+  // ====== Auto-cover disabled everywhere (kept from R23) ======
   function convertDepositToCash(txId){
     const tx = state.transactions.find(t=>t.id===txId); if(!tx) return;
     if(tx.type!=='deposit'){ alert('Only deposit (positive) transactions can be converted here.'); return; }
-    let amt = tx.amount;
-    let afterCover = coverShortfalls(amt);
-    const used = round2(amt - afterCover);
-    if(used > 0){
-      // little pulse on env list to suggest coverage occurred
-      const list = $('#envList');
-      if(list){ list.animate([{boxShadow:'0 0 0 0 rgba(255,107,107,0.0)'},{boxShadow:'0 0 0 8px rgba(128,226,126,0.15)'},{boxShadow:'0 0 0 0 rgba(128,226,126,0.0)'}],{duration:500, easing:'ease-out'}); }
-    }
-    state.cashPool = round2(state.cashPool + afterCover);
+    state.cashPool = round2(state.cashPool + tx.amount);
     state.archived.deposits = round2(state.archived.deposits + tx.amount);
+    log(`Converted deposit ${fmt(tx.amount)} to Unassigned (no auto-cover).`);
     state.transactions = state.transactions.filter(t=>t.id!==txId);
     save(); renderAll();
   }
@@ -752,8 +812,9 @@ body{margin:0; font-family:Roboto, system-ui, -apple-system, Segoe UI, Helvetica
     const tx = state.transactions.find(t => t.id === txId);
     const env = state.envelopes.find(e => e.id === envId);
     if(!tx || tx.type !== 'deposit' || !env) return;
-    env.balance = round2((env.balance||0) + tx.amount);
+    env.balance = round2((Number(env.balance)||0) + tx.amount);
     state.archived.deposits = round2(state.archived.deposits + tx.amount);
+    log(`Assigned deposit ${fmt(tx.amount)} to "${env.name}".`);
     state.transactions = state.transactions.filter(t => t.id !== txId);
     save(); renderAll();
   }
@@ -761,15 +822,17 @@ body{margin:0; font-family:Roboto, system-ui, -apple-system, Segoe UI, Helvetica
   function payTransactionWithBills(txId, bundle){
     const tx = state.transactions.find(t=>t.id===txId);
     if(!tx || tx.type!=='expense') return;
-    if(state.cashPool <= 0) { alert('Not enough unassigned cash.'); return; }
+    if(state.cashPool <= 0) { alert('Not enough Unassigned Cash.'); return; }
     const remaining = tx.amount - (tx.paidAmount||0);
     const applied = round2(Math.min(remaining, bundle, state.cashPool));
     if(applied <= 0) return;
     state.cashPool = round2(state.cashPool - applied);
     tx.paidAmount = round2((tx.paidAmount||0) + applied);
+    log(`Paid ${fmt(applied)} of expense with Unassigned cash. Remaining: ${fmt(remaining - applied)}.`);
     if(tx.paidAmount >= tx.amount - 1e-6){
       state.archived.expenses = round2(state.archived.expenses + tx.amount);
       state.transactions = state.transactions.filter(t=>t.id!==txId);
+      log(`Expense ${fmt(tx.amount)} fully paid and archived.`);
     }
     save(); renderAll();
   }
@@ -781,46 +844,68 @@ body{margin:0; font-family:Roboto, system-ui, -apple-system, Segoe UI, Helvetica
     if(!tx || tx.type !== 'expense' || !env) return;
     const remaining = tx.amount - (tx.paidAmount || 0);
     if(remaining <= 0) return;
-    // Soft overdraft: pay full remaining from the envelope (balance may go negative)
-    env.balance = round2((env.balance||0) - remaining);
+    env.balance = round2((Number(env.balance)||0) - remaining);
     tx.paidAmount = round2((tx.paidAmount || 0) + remaining);
-    // complete
     state.archived.expenses = round2(state.archived.expenses + tx.amount);
     state.transactions = state.transactions.filter(t => t.id !== txId);
+    log(`Paid expense ${fmt(tx.amount)} from envelope "${env.name}". New env balance: ${fmt(env.balance)} (negative allowed).`);
     save(); renderAll();
   }
 
   // ===== App State Export/Import =====
-  function download(filename, text){
-    const blob = new Blob([text], {type: 'application/json'});
+  function download(filename, text, type='application/json'){
+    const blob = new Blob([text], {type});
     const url = URL.createObjectURL(blob);
     const a=document.createElement('a');
     a.href=url; a.download=filename; a.style.display='none';
     document.body.appendChild(a); a.click();
     setTimeout(()=>{ URL.revokeObjectURL(url); a.remove(); }, 0);
   }
-  function exportData(){ download(`nvelopes-${new Date().toISOString().replace(/[:.]/g,'-')}.json`, JSON.stringify(state,null,2)); }
+  function exportData(){
+    // Entire state, including activity log
+    download(`nvelopes-${new Date().toISOString().replace(/[:.]/g,'-')}.json`, JSON.stringify(state,null,2));
+    log('Exported state to JSON.');
+  }
   function importData(){
     const inp=document.createElement('input'); inp.type='file'; inp.accept='application/json';
     inp.onchange=()=>{ const f=inp.files?.[0]; if(!f) return;
       const r=new FileReader();
       r.onload=()=>{ try{
-        state=JSON.parse(r.result);
-        if(!state.archived) state.archived={deposits:0,expenses:0};
-        if(typeof state.bankStarting!=='number') state.bankStarting=0;
-        if(!Array.isArray(state.envelopes)) state.envelopes=[];
-        if(!Array.isArray(state.transactions)) state.transactions=[];
-        if(!state.denom) state.denom = 20;
+        const incoming=JSON.parse(r.result);
+        // ensure shape
+        state={
+          bankCurrent: typeof incoming.bankCurrent==='number' ? incoming.bankCurrent
+                       : (typeof incoming.bankStarting==='number' ? round2(incoming.bankStarting + (incoming.archived?.deposits||0) - (incoming.archived?.expenses||0)) : 0),
+          cashPool: incoming.cashPool||0,
+          denom: incoming.denom||20,
+          archived: incoming.archived||{deposits:0,expenses:0},
+          envelopes: Array.isArray(incoming.envelopes)?incoming.envelopes:[],
+          transactions: Array.isArray(incoming.transactions)?incoming.transactions:[],
+          activity: Array.isArray(incoming.activity)?incoming.activity:[]
+        };
         save(); renderAll();
-      }catch{ alert('Invalid file'); } };
+        log('Imported state from JSON.');
+      }catch{ alert('Invalid file'); log('Import failed: invalid JSON','err'); } };
       r.readAsText(f);
     }; inp.click();
   }
 
-  // ===== Bank Modal =====
-  function openBankModal(){ const bd=$('#bankModalBackdrop'); const input=$('#bankStartInput'); if(!bd||!input) return; input.value = String(state.bankStarting||0); bd.classList.add('open'); setTimeout(()=> input.focus(), 0); }
+  // ===== Bank Modal (Current Balance) =====
+  function openBankModal(){
+    const bd=$('#bankModalBackdrop'); const input=$('#bankCurrentInput');
+    if(!bd||!input) return;
+    input.value = String(state.bankCurrent||0);
+    bd.classList.add('open');
+    setTimeout(()=> input.focus(), 0);
+  }
   function closeBankModal(){ const bd=$('#bankModalBackdrop'); if(bd) bd.classList.remove('open'); }
-  function saveBankStarting(){ const v = Number($('#bankStartInput').value); if(!Number.isFinite(v) || v < 0){ alert('Please enter a valid non-negative number.'); return; } state.bankStarting = round2(v); save(); closeBankModal(); renderAll(); }
+  function saveBankCurrent(){
+    const v = Number($('#bankCurrentInput').value);
+    if(!Number.isFinite(v) || v < 0){ alert('Please enter a valid non-negative number.'); return; }
+    state.bankCurrent = round2(v);
+    save(); closeBankModal(); renderAll();
+    log(`Set current bank balance to ${fmt(state.bankCurrent)}.`);
+  }
 
   // Tx form controls
   function openTxForm(){ const wrap=$('#txFormWrap'); wrap.classList.add('open'); wrap.setAttribute('aria-hidden','false'); $('#txDate').value=todayISO(); $('#txMerchant').focus(); }
@@ -869,18 +954,12 @@ body{margin:0; font-family:Roboto, system-ui, -apple-system, Segoe UI, Helvetica
       const tx={ id:uid('tx'), date, merchant, amount:absAmount, type:txnType, paidAmount: txnType==='expense' ? 0 : undefined };
       state.transactions.push(tx); added++;
     }
-    save(); renderAll(); alert(`Imported ${added} transaction(s).${skipped?` Skipped ${skipped} row(s).`:''}`);
+    save(); renderAll(); log(`Imported ${added} transaction(s)${skipped?`, skipped ${skipped}.`:'.'}`);
   }
 
   // ===== Events =====
   $('#toggleEnvForm').addEventListener('click', ()=>{ const wrap=$('#envFormWrap'); wrap.classList.contains('open')? closeEnvForm() : openEnvForm(); });
-  $('#addEnvelopeConfirm').addEventListener('click', ()=>{
-    addEnvelope(
-      $('#newEnvName').value.trim(),
-      Number($('#newEnvBudget').value||0),
-      Number($('#newEnvStartBal').value||0)
-    );
-  });
+  $('#addEnvelopeConfirm').addEventListener('click', addEnvelope);
   $('#cancelEnvForm').addEventListener('click', closeEnvForm);
 
   $('#envEditCancel').addEventListener('click', closeEnvEditModal);
@@ -892,36 +971,48 @@ body{margin:0; font-family:Roboto, system-ui, -apple-system, Segoe UI, Helvetica
 
   $('#exportBtn').addEventListener('click', exportData);
   $('#importBtn').addEventListener('click', importData);
-  $('#resetBtn').addEventListener('click', ()=>{ if(!confirm('Reset demo and clear all data?')) return; state=structuredClone(DEFAULT_STATE); save(); clearBillSelection(); renderAll(); });
+  $('#resetBtn').addEventListener('click', ()=>{ if(!confirm('Reset and clear all data?')) return; state=structuredClone(DEFAULT_STATE); save(); clearBillSelection(); renderAll(); log('Reset all data.','warn'); });
 
   $('#setBankBtn').addEventListener('click', openBankModal);
   $('#bankCard').addEventListener('click', openBankModal);
   $('#bankCancel').addEventListener('click', closeBankModal);
-  $('#bankSave').addEventListener('click', saveBankStarting);
+  $('#bankSave').addEventListener('click', saveBankCurrent);
+
+  // Show/Hide Activity Log (hidden by default)
+  const logPanel = $('#logPanel');
+  const toggleLogBtn = $('#toggleLogBtn');
+  toggleLogBtn.addEventListener('click', ()=>{
+    const vis = logPanel.style.display !== 'none';
+    if(vis){ logPanel.style.display='none'; toggleLogBtn.textContent='Show Activity Log'; }
+    else { logPanel.style.display='block'; toggleLogBtn.textContent='Hide Activity Log'; renderLog(); }
+  });
 
   document.querySelector('#denomControls').addEventListener('click', e=>{
     const btn=e.target.closest('button'); if(!btn) return;
     const d=btn.dataset.denom;
-    if(d){ state.denom=Number(d); save(); clearBillSelection(); renderPool(); return; }
+    if(d){ state.denom=Number(d); save(); clearBillSelection(); renderPool(); log(`Set denomination to $${state.denom}.`); return; }
   });
   $('#create-cash').addEventListener('click', ()=>{
-    const n=Number(prompt('Create cash in Unassigned (will auto-cover shortfalls first)', '100'))||0;
+    const n=Number(prompt('Create cash in Unassigned', '100'))||0;
     if(n<=0) return;
-    const leftover = coverShortfalls(n);
-    state.cashPool = round2(state.cashPool + leftover);
+    state.cashPool = round2(state.cashPool + n); // no auto-cover!
     save(); renderAll();
+    log(`Created ${fmt(n)} in Unassigned (no auto-cover).`);
   });
   $('#delete-cash').addEventListener('click', ()=>{
     const n=Number(prompt('Delete cash from Unassigned', '50'))||0;
     if(n<=0) return;
-    if(state.cashPool<n) return alert('Not enough unassigned cash');
+    if(state.cashPool<n) return alert('Not enough Unassigned Cash');
     state.cashPool=round2(state.cashPool - n); save(); clearBillSelection(); renderAll();
+    log(`Deleted ${fmt(n)} from Unassigned.`);
   });
 
   $('#selClearBtn').addEventListener('click', ()=> clearBillSelection());
 
   $('#excelImportBtn').addEventListener('click', ()=> $('#excelFile').click());
   $('#excelFile').addEventListener('change', async (e)=>{ const file=e.target.files?.[0]; if(!file) return; await importExcelOrCsv(file); e.target.value=''; });
+
+  $('#clearLogBtn').addEventListener('click', ()=>{ if(!confirm('Clear activity log?')) return; state.activity=[]; save(); if(logPanel.style.display!=='none') renderLog(); });
 
   document.addEventListener('keydown', e=>{
     if(e.key==='Escape'){
@@ -934,7 +1025,7 @@ body{margin:0; font-family:Roboto, system-ui, -apple-system, Segoe UI, Helvetica
   });
 
   // expose minimal helpers for debugging
-  window.__nvelopes = { state, save, renderAll, coverShortfalls };
+  window.__nvelopes = { state, save, renderAll };
 
   // Boot
   renderAll();
