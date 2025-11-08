@@ -20,38 +20,48 @@
       line-height: 1.6;
     }
     header {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      align-items: center;
-      justify-items: center;
-      padding: 4rem 2rem;
-      gap: 2rem;
-    }
-    header .text {
       text-align: center;
+      padding: 4rem 1rem 2rem;
     }
     header h1 {
       font-size: 3rem;
       color: var(--accent);
       letter-spacing: -0.03em;
-      margin-bottom: 1rem;
+      margin-bottom: 0.5rem;
     }
     header p {
       color: var(--muted);
       font-size: 1.3rem;
     }
-    header video {
-      width: 320px;
+    .intro {
+      display: flex;
+      align-items: center; /* center vertically */
+      justify-content: center;
+      gap: 3rem;
+      flex-wrap: wrap;
+      padding: 3rem 2rem;
+    }
+    .intro .text {
+      flex: 1;
+      min-width: 280px;
+      max-width: 500px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center; /* center the text box */
+    }
+    .intro video {
+      flex: 0 0 320px;
       height: 570px;
       aspect-ratio: 9/16;
       border-radius: 16px;
       object-fit: cover;
       box-shadow: 0 4px 20px rgba(0,0,0,0.4);
-      justify-self: center;
+      align-self: center; /* align video with text */
     }
-    @media (max-width: 800px) {
-      header {
-        grid-template-columns: 1fr;
+    @media (max-width: 900px) {
+      .intro {
+        flex-direction: column;
+        align-items: center;
       }
     }
     section {
@@ -111,27 +121,29 @@
 </head>
 <body>
   <header>
+    <h1>NVLopes</h1>
+    <p>Budgeting Reimagined</p>
+  </header>
+
+  <div class="intro">
     <div class="text">
-      <h1>NVLopes</h1>
-      <p>Budgeting Reimagined</p>
+      <section class="gameplay">
+        <h2>Where Budgeting Meets Play</h2>
+        <p>NVLopes blurs the line between budgeting and gaming. Every action—from dropping bills into envelopes to achieving savings goals—feels interactive and rewarding. Visual animations, sound effects, and subtle haptic feedback make managing money feel like leveling up in a game. You don’t just track your spending—you play with it, learn from it, and master it.</p>
+        <ul>
+          <li>🎯 Envelope System Reinvented – Make saving visual and purposeful.</li>
+          <li>💵 Drag & Drop Bills – Move your funds like game pieces with satisfying motion.</li>
+          <li>📈 Smart Tracking – Watch progress bars rise as your envelopes grow.</li>
+          <li>🔊 Audio & Haptic Feedback – Every interaction feels tactile and alive.</li>
+          <li>☁️ Save & Sync – Keep your progress safe like saving your game data.</li>
+        </ul>
+      </section>
     </div>
     <video autoplay muted loop playsinline>
       <source src="WebsiteVideo.mp4" type="video/mp4" />
       Your browser does not support the video tag.
     </video>
-  </header>
-
-  <section class="gameplay">
-    <h2>Where Budgeting Meets Play</h2>
-    <p>NVLopes blurs the line between budgeting and gaming. Every action—from dropping bills into envelopes to achieving savings goals—feels interactive and rewarding. Visual animations, sound effects, and subtle haptic feedback make managing money feel like leveling up in a game. You don’t just track your spending—you play with it, learn from it, and master it.</p>
-    <ul>
-      <li>🎯 Envelope System Reinvented – Make saving visual and purposeful.</li>
-      <li>💵 Drag & Drop Bills – Move your funds like game pieces with satisfying motion.</li>
-      <li>📈 Smart Tracking – Watch progress bars rise as your envelopes grow.</li>
-      <li>🔊 Audio & Haptic Feedback – Every interaction feels tactile and alive.</li>
-      <li>☁️ Save & Sync – Keep your progress safe like saving your game data.</li>
-    </ul>
-  </section>
+  </div>
 
   <div class="cta">
     <h2>Start budgeting smarter today</h2>
