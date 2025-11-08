@@ -1,1035 +1,143 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Nvelopes • R24</title>
-
-<!-- Cache-bust to ?v=... -->
-<script>
-(function(){
-  const BUILD='r24-current-bank-balance-hide-log-2025-08-25';
-  const u=new URL(location.href);
-  if(u.searchParams.get('v')!==BUILD){u.searchParams.set('v',BUILD);location.replace(u.toString());}
-})();
-</script>
-
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js?v=r24"></script>
-
-<style>
-:root{ --primary:#80e27e; --on-primary:#032106; --surface:#0e1116; --surface-2:#141922; --surface-3:#10151c; --text:#e6ebf2; --muted:#aab4c3; --outline:#26303a; --danger:#ff6b6b; --danger-2:#ffb3b3; --radius:14px; --radius-lg:18px; --shadow-1:0 1px 2px rgba(0,0,0,.45), 0 2px 6px rgba(0,0,0,.35);} *{box-sizing:border-box}
-html,body{height:100%}
-body{margin:0; font-family:Roboto, system-ui, -apple-system, Segoe UI, Helvetica, Arial; color:var(--text); background:linear-gradient(180deg,#0b0d11 0%, #0a0c0f 50%, #080a0d 100%);}
-.app{max-width:1400px; margin:0 auto; padding:16px; display:grid; gap:16px; grid-template-rows:auto auto 1fr; min-height:100dvh}
-.appbar{display:flex; align-items:center; gap:12px; padding:12px 16px; background:var(--surface-2); border:1px solid var(--outline); border-radius:var(--radius-lg); box-shadow:var(--shadow-1);}
-.logo{width:40px; height:40px; border-radius:12px; display:grid; place-items:center; font-weight:900; background:linear-gradient(135deg,#7bd88f,#6cb6ff); color:#041e0b;}
-.brand{display:grid;} .brand .title{font-weight:900;} .brand .sub{color:var(--muted); font-size:12px;}
-.tray{margin-left:auto; display:flex; gap:8px; flex-wrap:wrap}
-.btn{appearance:none; border:1px solid var(--outline); background:#0f141a; color:var(--text); padding:10px 12px; border-radius:12px; font-weight:700; cursor:pointer;}
-.btn-sm{padding:8px 10px; font-weight:600}
-.btn-primary{background:var(--primary); color:var(--on-primary); border-color:transparent}
-.btn-tonal{background:#1a2a1e; color:#c8f3c7; border-color:#2c3b2e}
-.btn-danger{background:linear-gradient(180deg,#3a1111,#240a0a); color:#ffdede; border-color:#4a1b1b}
-.input,.select,.textarea{background:#0f141a; color:var(--text); border:1px solid var(--outline); border-radius:12px; padding:10px 12px}
-
-.stats{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px;}
-.card{background:var(--surface-2); border:1px solid var(--outline); border-radius:var(--radius-lg); box-shadow:var(--shadow-1); padding:14px;}
-.card h4{margin:0 0 6px 0; font-size:12px; text-transform:uppercase; letter-spacing:.4px; color:var(--muted)}
-.value{font-size:26px; font-weight:900}
-.subvalue{margin-top:4px; font-size:12px; color:var(--muted)}
-
-.layout{display:grid; grid-template-columns:1.1fr .9fr 1fr; gap:16px; align-items:start;}
-.panel{background:var(--surface-2); border:1px solid var(--outline); border-radius:var(--radius-lg); box-shadow:var(--shadow-1); padding:12px; display:flex; flex-direction:column; gap:12px; min-height:520px;}
-.panel h3{margin:4px 0; font-size:16px}
-
-/* ENVELOPES */
-.env-header{display:flex; align-items:center; justify-content:space-between; gap:8px}
-.env-actions{display:flex; gap:8px; flex-wrap:wrap}
-.env-form-wrap{display:none}
-.env-form-wrap.open{display:block; animation:drop .18s ease-out}
-@keyframes drop{from{transform:translateY(-4px); opacity:0} to{transform:translateY(0); opacity:1}}
-.env-form{display:flex; gap:8px; flex-wrap:wrap; align-items:flex-end; background:rgba(255,255,255,.02); border:1px dashed var(--outline); padding:10px; border-radius:12px}
-.env-form label{display:block; font-size:12px; color:var(--muted); margin:0 0 4px}
-
-.env-list{display:grid; gap:10px; overflow:auto; max-height:65vh; padding-right:4px}
-.empty-env{color:var(--muted); font-size:13px; border:1px dashed var(--outline); padding:12px; border-radius:12px;}
-.env{position:relative; background:linear-gradient(180deg,#f7f1e4,#eee5d2); color:#2a2a2a; border:1px solid #d9ccb0; border-radius:10px; padding:12px 12px 10px; box-shadow:0 2px 4px rgba(0,0,0,.22), inset 0 1px 0 rgba(255,255,255,.6); cursor:grab; user-select:none;}
-.env:active{cursor:grabbing}
-.env .stamp{position:absolute; right:8px; top:8px; width:24px; height:24px; border-radius:6px; background:radial-gradient(circle at 30% 30%, #fff 0 30%, #ffe0f0 31% 100%); border:1px dashed #b88; box-shadow:inset 0 1px 0 rgba(255,255,255,.6); opacity:.9}
-.env::before{content:""; position:absolute; left:0; right:0; top:0; height:42%; background:linear-gradient(180deg,#f1e9d6,#e8dcc3); clip-path:polygon(0 0,100% 0,50% 100%); border-top-left-radius:10px; border-top-right-radius:10px; border-bottom:1px solid rgba(0,0,0,.06)}
-.env::after{content:""; position:absolute; left:10px; right:10px; top:42%; height:1px; background:linear-gradient(90deg,transparent,rgba(0,0,0,.18),transparent); opacity:.6}
-.env .window{position:relative; margin-top:26px; background:rgba(255,255,255,.7); border:1px solid rgba(0,0,0,.08); border-radius:8px; padding:8px 10px; backdrop-filter:blur(1px); box-shadow:inset 0 1px 0 rgba(255,255,255,.65);}
-.env .name{font-weight:900; font-size:13px; letter-spacing:.2px; color:#1e1e1e}
-.env .meta{color:#4a4a4a; font-size:11px}
-.env .tape{margin-top:6px; height:6px; border-radius:999px; background:repeating-linear-gradient(90deg,rgba(0,0,0,.08) 0 10px, rgba(0,0,0,.12) 10px 20px); overflow:hidden; border:1px solid rgba(0,0,0,.08)}
-.env .bar{height:100%; background:linear-gradient(90deg,#80e27e,#6cb6ff); width:0%}
-.env.dragover{outline:2px dashed #5aa65a; outline-offset:6px}
-.env.reorder-target{outline:2px dashed #6cb6ff; outline-offset:6px}
-.env .actions-inline{margin-top:8px; display:flex; justify-content:flex-end; gap:6px}
-
-/* NEGATIVE (shortfall) styling */
-.env.neg .meta .bal{color:var(--danger-2); font-weight:800}
-.env.neg .meta .short{color:var(--danger-2); font-weight:800}
-.env.neg .bar{background:linear-gradient(90deg,#ff6b6b,#ffa8a8)}
-.env.neg{box-shadow:0 2px 6px rgba(255,0,0,.15), inset 0 1px 0 rgba(255,255,255,.6);}
-
-/* MONEY TABLE */
-.money{display:grid; grid-template-rows:auto auto 1fr; position:relative}
-.money-head{position:sticky; top:0; z-index:3; background:linear-gradient(180deg,rgba(20,25,34,.98),rgba(20,25,34,.92)); padding-bottom:6px; border-bottom:1px dashed var(--outline)}
-.money-stats{display:flex; justify-content:space-between; align-items:center; margin-bottom:6px}
-.money-stats strong{font-size:20px}
-.tray-combined{position:sticky; top:56px; z-index:2; background:linear-gradient(180deg,rgba(20,25,34,.96),rgba(20,25,34,.90)); border:1px dashed var(--outline); border-radius:14px; padding:10px; box-shadow:inset 0 1px 0 rgba(255,255,255,.04); min-height:120px}
-.tray-combined.drop-active{border-color:var(--primary); box-shadow:0 0 0 2px rgba(128,226,126,.15) inset;}
-.tray-row{display:flex; gap:12px; align-items:center; justify-content:space-between; flex-wrap:wrap;}
-.tray-instructions{color:var(--muted); font-size:13px; display:flex; align-items:center; gap:8px}
-.tray-instructions .tag{background:#1a2620; color:#c8f3c7; border:1px solid #294033; padding:4px 8px; border-radius:999px; font-size:12px; font-weight:700}
-#denomControls{display:flex; gap:8px; align-items:center; flex-wrap:wrap}
-
-.bills{display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-top:10px}
-.bill{position:relative; width:128px; height:60px; border-radius:8px; user-select:none; cursor:grab; box-shadow:0 2px 4px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.06); display:grid; place-items:center; padding:8px; border:1px solid rgba(0,0,0,.35); overflow:hidden}
-.bill:active{cursor:grabbing}
-.bill .note-center{font-weight:900; font-size:20px; letter-spacing:.5px; text-shadow:0 1px 0 rgba(0,0,0,.2)}
-.bill .note-corner{position:absolute; font-weight:800; font-size:11px; opacity:.9}
-.bill .note-corner.tl{top:6px; left:8px}
-.bill .note-corner.br{bottom:6px; right:8px}
-.bill .seal{position:absolute; width:28px; height:28px; border-radius:50%; display:grid; place-items:center; font-weight:800; font-size:12px; opacity:.8; right:8px; top:8px; text-shadow:0 1px 0 rgba(0,0,0,.2)}
-.bill .serial{position:absolute; left:8px; bottom:6px; font-family:monospace; font-size:10px; letter-spacing:.5px; opacity:.85}
-.bill .ribbon{position:absolute; top:-6px; bottom:-6px; width:6px; left:57%; filter:blur(.2px); opacity:.55}
-.bill::before{content:""; position:absolute; inset:0; background:radial-gradient(200px 50px at 50% -20%, rgba(255,255,255,.14), transparent 60%), repeating-linear-gradient(90deg, rgba(255,255,255,.06), rgba(255,255,255,.06) 1px, transparent 1px 4px); pointer-events:none; mix-blend-mode:overlay}
-.bill::after{content:""; position:absolute; inset:0; background:repeating-conic-gradient(from 0deg, rgba(255,255,255,.04) 0 10deg, transparent 10deg 20deg); opacity:.5; pointer-events:none; mix-blend-mode:overlay}
-
-.bill-1{background:linear-gradient(180deg,#1f2f1f,#161f16); border-color:#2b3b2b; color:#e8f5e9}
-.bill-1 .seal{background:#2e462e; color:#e8f5e9}
-.bill-5{background:linear-gradient(180deg,#2a2335,#201a0b); border-color:#3d3350; color:#e9e0ff}
-.bill-5 .seal{background:#473761; color:#f2eaff}
-.bill-10{background:linear-gradient(180deg,#3a2a18,#2a1e12); border-color:#533a22; color:#ffe7c7}
-.bill-10 .seal{background:#5a3b1f; color:#ffe7c7}
-.bill-20{background:linear-gradient(180deg,#223a2a,#18281f); border-color:#2f4e3b; color:#cfead9}
-.bill-20 .seal{background:#2d5a40; color:#e7fff2}
-.bill-50{background:linear-gradient(180deg,#402338,#2d1928); border-color:#5a324e; color:#ffd8ef}
-.bill-50 .seal{background:#6a3a5b; color:#ffe5f6}
-.bill-100{background:linear-gradient(180deg,#1c2a3d,#121c29); border-color:#2b3f58; color:#d6e8ff}
-.bill-100 .seal{background:#27415f; color:#e6f2ff}
-.bill-100 .ribbon{background:linear-gradient(180deg,#3aa0ff,#7cc6ff)}
-
-.bill.selected{outline:3px solid #6cb6ff; outline-offset:2px; box-shadow:0 0 0 3px rgba(108,182,255,.15), 0 2px 6px rgba(0,0,0,.45)}
-.more-count{color:var(--muted); font-size:12px}
-.selection-pill{font-size:12px; color:#cfe0ff; background:#0b1730; border:1px solid #1b2b52; padding:4px 8px; border-radius:999px}
-.selection-actions{display:flex; gap:6px; align-items:center}
-
-/* TRANSACTIONS */
-.tx-header{display:flex; align-items:center; justify-content:space-between; gap:8px}
-.tx-actions{display:flex; gap:8px; align-items:center; flex-wrap:wrap}
-.tx-form-wrap{display:none}
-.tx-form-wrap.open{display:block; animation:drop .18s ease-out}
-.tx-form{display:flex; flex-wrap:wrap; gap:12px; align-items:flex-end; background:rgba(255,255,255,.02); border:1px dashed var(--outline); padding:10px; border-radius:12px}
-.tx-form label{display:block; font-size:12px; color:var(--muted); margin:0 0 4px}
-.tx-list{display:grid; gap:10px; overflow:auto; max-height:65vh; padding-right:4px}
-.tx{background:var(--surface-3); border:1px solid var(--outline); border-radius:14px; padding:10px; display:grid; grid-template-columns:1fr auto; align-items:center; gap:8px}
-.tx .meta{color:var(--muted); font-size:12px}
-.tx.dragover{outline:2px dashed var(--primary); outline-offset:6px}
-
-/* Activity Log */
-.log{display:grid; gap:8px; overflow:auto; max-height:65vh; padding-right:4px}
-.log-item{border:1px solid var(--outline); border-radius:12px; padding:8px; background:var(--surface-3); font-size:13px; display:flex; justify-content:space-between; gap:10px}
-.log-item .when{color:var(--muted); font-variant-numeric:tabular-nums}
-.log-item.warn{border-color:#5a3a2a}
-.log-item.err{border-color:#5a2a2a}
-
-/* Modal */
-.modal-backdrop{position:fixed; inset:0; background:rgba(0,0,0,.55); display:none; align-items:center; justify-content:center; z-index:50}
-.modal-backdrop.open{display:flex}
-.modal{width:min(560px,92vw); background:var(--surface-2); border:1px solid var(--outline); border-radius:16px; box-shadow:var(--shadow-1); padding:16px}
-.modal h4{margin:0 0 10px 0}
-.modal .row{display:flex; gap:10px; align-items:flex-end; flex-wrap:wrap}
-.modal .actions{display:flex; gap:8px; justify-content:flex-end; margin-top:12px}
-
-@media (max-width:1200px){
-  .layout{grid-template-columns:1fr}
-  .env-list,.tx-list,.log{max-height:none}
-  .tray-combined{position:static}
-  .bill{width:44vw; max-width:220px; height:72px}
-}
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NVLopes – Budgeting Reimagined</title>
+  <meta name="description" content="NVLopes is a modern envelope-based budgeting app that helps you organize, track, and visualize your money with simplicity and control." />
+  <style>
+    :root {
+      --bg: #0e0e11;
+      --accent: #3b82f6;
+      --text: #f5f5f7;
+      --muted: #9ca3af;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: "Inter", system-ui, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+    }
+    header {
+      text-align: center;
+      padding: 4rem 1rem 2rem;
+      position: relative;
+      overflow: hidden;
+    }
+    header video {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      z-index: -1;
+      opacity: 0.35;
+    }
+    header h1 {
+      font-size: 2.8rem;
+      color: var(--accent);
+      letter-spacing: -0.03em;
+      z-index: 1;
+      position: relative;
+    }
+    header p {
+      color: var(--muted);
+      font-size: 1.1rem;
+      margin-top: 0.5rem;
+      position: relative;
+      z-index: 1;
+    }
+    section {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 2rem 1rem;
+    }
+    .gameplay {
+      background: #18181b;
+      border-radius: 12px;
+      margin: 3rem auto;
+      padding: 2rem;
+      max-width: 850px;
+      text-align: left;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    }
+    .gameplay h2 {
+      color: var(--accent);
+      margin-bottom: 1rem;
+      text-align: center;
+    }
+    .gameplay p {
+      color: var(--muted);
+      font-size: 1.1rem;
+      margin-bottom: 1rem;
+    }
+    .gameplay ul {
+      list-style: disc;
+      margin-left: 2rem;
+      color: var(--text);
+      line-height: 1.8;
+    }
+    .cta {
+      text-align: center;
+      padding: 3rem 1rem;
+    }
+    .cta a {
+      background-color: var(--accent);
+      color: white;
+      text-decoration: none;
+      padding: 0.9rem 2rem;
+      border-radius: 8px;
+      font-weight: 600;
+      transition: background 0.2s ease;
+    }
+    .cta a:hover {
+      background-color: #2563eb;
+    }
+    footer {
+      text-align: center;
+      padding: 2rem 1rem;
+      font-size: 0.9rem;
+      color: var(--muted);
+      border-top: 1px solid #1f2937;
+    }
+  </style>
 </head>
 <body>
-<div class="app" id="app">
-  <section class="appbar">
-    <div class="logo">N</div>
-    <div class="brand"><span class="title">Nvelopes</span><span class="sub">R24</span></div>
-    <div class="tray">
-      <button id="exportBtn" class="btn btn-tonal btn-sm">Export Profile</button>
-      <button id="importBtn" class="btn btn-sm">Import Profile</button>
-      <button id="setBankBtn" class="btn btn-sm">Set Bank</button>
-      <button id="toggleLogBtn" class="btn btn-sm">Show Activity Log</button>
-      <button id="resetBtn" class="btn btn-danger btn-sm">Reset</button>
-    </div>
+  <header>
+    <video autoplay muted loop playsinline>
+      <source src="WebsiteVideo.mp4" type="video/mp4" />
+      Your browser does not support the video tag.
+    </video>
+    <h1>NVLopes</h1>
+    <p>Budgeting Reimagined</p>
+  </header>
+
+  <section class="gameplay">
+    <h2>Where Budgeting Meets Play</h2>
+    <p>NVLopes blurs the line between budgeting and gaming. Every action—from dropping bills into envelopes to achieving savings goals—feels interactive and rewarding. Visual animations, sound effects, and subtle haptic feedback make managing money feel like leveling up in a game. You don’t just track your spending—you play with it, learn from it, and master it.</p>
+    <ul>
+      <li>🎯 Envelope System Reinvented – Make saving visual and purposeful.</li>
+      <li>💵 Drag & Drop Bills – Move your funds like game pieces with satisfying motion.</li>
+      <li>📈 Smart Tracking – Watch progress bars rise as your envelopes grow.</li>
+      <li>🔊 Audio & Haptic Feedback – Every interaction feels tactile and alive.</li>
+      <li>☁️ Save & Sync – Keep your progress safe like saving your game data.</li>
+    </ul>
   </section>
 
-  <!-- Middle card is Unassigned Cash -->
-  <section class="stats">
-    <div class="card"><h4>Envelope Balance</h4><div id="stat-env-balance" class="value">$0.00</div></div>
-    <div class="card"><h4>Unassigned Cash</h4><div id="pool-amount" class="value">$0.00</div></div>
-    <div class="card" id="bankCard" style="cursor:pointer"><h4>Bank Balance</h4><div id="stat-bank-balance" class="value">$0.00</div></div>
-  </section>
-
-  <section class="layout">
-    <!-- ENVELOPES -->
-    <div class="panel">
-      <div class="env-header">
-        <h3>Envelopes</h3>
-        <div class="env-actions">
-          <button id="toggleEnvForm" class="btn btn-primary btn-sm">Add Envelope</button>
-        </div>
-      </div>
-
-      <!-- Add Envelope -->
-      <div id="envFormWrap" class="env-form-wrap" aria-hidden="true">
-        <div class="env-form">
-          <div><label>Name</label><input id="newEnvName" class="input" placeholder="New envelope name" /></div>
-          <div><label>Budget ($)</label><input id="newEnvBudget" class="input" type="number" inputmode="decimal" step="0.01" placeholder="0.00" /></div>
-          <div><label>Starting Balance ($)</label><input id="newEnvStartBal" class="input" type="number" inputmode="decimal" step="0.01" placeholder="e.g. -100.00 allowed" /></div>
-          <div style="display:flex; gap:8px; align-items:flex-end;">
-            <button id="addEnvelopeConfirm" class="btn btn-primary">Create Envelope</button>
-            <button id="cancelEnvForm" class="btn">Close</button>
-          </div>
-        </div>
-      </div>
-
-      <div class="env-list" id="envList"></div>
-      <div id="envEmpty" class="empty-env" style="display:none">No envelopes yet. Click <b>Add Envelope</b> to create your first one.</div>
-    </div>
-
-    <!-- MONEY TABLE -->
-    <div class="panel money" id="moneyPanel">
-      <div class="money-head">
-        <h3>Money Table (Unassigned Cash)</h3>
-        <div class="money-stats">
-          <div class="selection-actions">
-            <span class="selection-pill" id="selCountPill" title="Selected bills in tray">Selected: 0</span>
-            <button id="selClearBtn" class="btn btn-sm" title="Clear selection">Clear</button>
-          </div>
-          <div id="denomControls">
-            <span style="color:var(--muted); font-size:12px">Denominations:</span>
-            <button class="btn btn-sm" data-denom="1">$1</button>
-            <button class="btn btn-sm" data-denom="5">$5</button>
-            <button class="btn btn-sm" data-denom="10">$10</button>
-            <button class="btn btn-sm" data-denom="20">$20</button>
-            <button class="btn btn-sm" data-denom="50">$50</button>
-            <button class="btn btn-sm" data-denom="100">$100</button>
-            <button id="create-cash" class="btn btn-tonal btn-sm">Create Cash</button>
-            <button id="delete-cash" class="btn btn-sm">Delete Cash</button>
-          </div>
-        </div>
-      </div>
-
-      <div id="billTray" class="tray-combined" aria-label="Money tray. Drop deposits or envelopes here.">
-        <div class="tray-row">
-          <div class="tray-instructions"><span>Drop</span><span class="tag">Deposits</span><span>or</span><span class="tag">Envelopes</span><span>here →</span></div>
-        </div>
-        <div id="bills" class="bills" aria-live="polite"></div>
-      </div>
-
-      <div style="min-height:8px"></div>
-    </div>
-
-    <!-- TRANSACTIONS -->
-    <div class="panel">
-      <div class="tx-header">
-        <h3>Transactions</h3>
-        <div class="tx-actions">
-          <button id="toggleTxForm" class="btn btn-primary btn-sm">Add Tx</button>
-          <button id="excelImportBtn" class="btn btn-tonal btn-sm">Import Excel/CSV</button>
-        </div>
-      </div>
-      <div class="helper">Accepted columns: <b>Date</b>, <b>Merchant</b>, <b>Amount</b>, <b>Type</b> ("expense" or "deposit"). If Type is missing, sign of Amount is used (negative = expense).</div>
-
-      <div id="txFormWrap" class="tx-form-wrap" aria-hidden="true">
-        <div class="tx-form">
-          <div><label>Date</label><input id="txDate" class="input" type="date" /></div>
-          <div><label>Merchant</label><input id="txMerchant" class="input" placeholder="e.g. Trader Joe's" /></div>
-          <div><label>Type</label><select id="txType" class="select"><option value="expense">Expense (−)</option><option value="deposit">Deposit (+)</option></select></div>
-          <div><label>Amount</label><input id="txAmount" class="input" type="number" inputmode="decimal" step="0.01" placeholder="0.00" /></div>
-          <div style="display:flex; gap:8px; align-items:flex-end;">
-            <button id="addTxConfirm" class="btn btn-primary">Add Transaction</button>
-            <button id="cancelTxForm" class="btn">Close</button>
-          </div>
-        </div>
-      </div>
-
-      <div class="tx-list" id="txList"></div>
-    </div>
-
-    <!-- ACTIVITY LOG (hidden by default) -->
-    <div class="panel" id="logPanel" style="display:none;">
-      <div style="display:flex; justify-content:space-between; align-items:center">
-        <h3>Activity Log</h3>
-        <div style="display:flex; gap:8px;">
-          <button id="clearLogBtn" class="btn btn-sm">Clear Log</button>
-          <!-- Export Log button removed; included in main export -->
-        </div>
-      </div>
-      <div class="log" id="logList"></div>
-    </div>
-  </section>
-
-  <input id="excelFile" type="file" accept=".xlsx,.xls,.csv" style="display:none" />
-</div>
-
-<!-- Set Bank Modal (Current Balance) -->
-<div id="bankModalBackdrop" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="bankModalTitle">
-  <div class="modal">
-    <h4 id="bankModalTitle">Set Current Bank Balance</h4>
-    <div class="row">
-      <div style="flex:1">
-        <label for="bankCurrentInput" style="display:block; font-size:12px; color:var(--muted); margin:0 0 4px">Amount (USD)</label>
-        <input id="bankCurrentInput" class="input" type="number" inputmode="decimal" step="0.01" min="0" placeholder="0.00" />
-      </div>
-    </div>
-    <div class="actions">
-      <button id="bankCancel" class="btn">Cancel</button>
-      <button id="bankSave" class="btn btn-primary">Save</button>
-    </div>
+  <div class="cta">
+    <h2>Start budgeting smarter today</h2>
+    <p style="margin:1rem 0 2rem;color:var(--muted)">Available now for Android.</p>
+    <a href="mailto:info@nvlopes.com">Contact Us</a>
   </div>
-</div>
 
-<!-- Edit Envelope Modal -->
-<div id="envEditBackdrop" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="envEditTitle">
-  <div class="modal">
-    <h4 id="envEditTitle">Edit Envelope</h4>
-    <div class="row">
-      <div style="flex:1">
-        <label style="display:block; font-size:12px; color:var(--muted); margin:0 0 4px">Name</label>
-        <input id="editEnvName" class="input" placeholder="Envelope name" />
-      </div>
-      <div>
-        <label style="display:block; font-size:12px; color:var(--muted); margin:0 0 4px">Budget ($)</label>
-        <input id="editEnvBudget" class="input" type="number" inputmode="decimal" step="0.01" />
-      </div>
-      <div>
-        <label style="display:block; font-size:12px; color:var(--muted); margin:0 0 4px">Balance ($)</label>
-        <!-- negative allowed -->
-        <input id="editEnvBalance" class="input" type="number" inputmode="decimal" step="0.01" />
-      </div>
-    </div>
-    <div class="actions">
-      <button id="envEditCancel" class="btn">Cancel</button>
-      <button id="envEditSave" class="btn btn-primary">Save Changes</button>
-    </div>
-  </div>
-</div>
+  <footer>
+    © <span id="year"></span> NVLopes. All rights reserved.
+  </footer>
 
-<script>
-(function(){
-  // ===== Utils =====
-  const $ = s => document.querySelector(s);
-  const $$ = s => Array.from(document.querySelectorAll(s));
-  const fmt = n => (n||0).toLocaleString(undefined,{style:'currency',currency:'USD'});
-  const clamp = (n,a,b)=>Math.max(a,Math.min(b,n));
-  const todayISO = ()=> new Date().toISOString().slice(0,10);
-  const uid = (p='id') => p+'_'+Math.random().toString(36).slice(2,9);
-  const round2 = (x)=> Math.round(x*100)/100;
-
-  // ===== State =====
-  // R24 moves from bankStarting+archived deltas to a direct "bankCurrent".
-  const DEFAULT_STATE = { bankCurrent:0, cashPool:0, denom:20, archived:{deposits:0,expenses:0}, envelopes:[], transactions:[], activity:[] };
-  const STORAGE_KEY = 'nvelopes_r24_edit_storage';
-  let state = load();
-  let editingEnvId = null;
-
-  // selection state for bills (multi-select)
-  const selectedBills = new Set();
-  let lastClickedBillIndex = null;
-
-  function load(){
-    try{
-      const raw = localStorage.getItem(STORAGE_KEY);
-      let s = raw? JSON.parse(raw) : null;
-
-      if(!s){
-        // Migrate from prior versions if present
-        const prevRaw = localStorage.getItem('nvelopes_r23_edit_storage') || localStorage.getItem('nvelopes_r22_edit_storage');
-        if(prevRaw){
-          try{
-            const p = JSON.parse(prevRaw);
-            const bankCurrentFromPrev = (typeof p.bankStarting==='number'
-              ? (p.bankStarting + (p.archived?.deposits||0) - (p.archived?.expenses||0))
-              : 0);
-            s = {
-              bankCurrent: round2(bankCurrentFromPrev),
-              cashPool: p.cashPool||0,
-              denom: p.denom||20,
-              archived: p.archived||{deposits:0,expenses:0},
-              envelopes: Array.isArray(p.envelopes)?p.envelopes:[],
-              transactions: Array.isArray(p.transactions)?p.transactions:[],
-              activity: Array.isArray(p.activity)?p.activity:[]
-            };
-          }catch{ s = null; }
-        }
-      }
-      if(!s) s = structuredClone(DEFAULT_STATE);
-
-      // Ensure shape
-      if(typeof s.bankCurrent!=='number') s.bankCurrent=0;
-      if(!s.archived) s.archived={deposits:0,expenses:0};
-      if(!Array.isArray(s.envelopes)) s.envelopes=[];
-      if(!Array.isArray(s.transactions)) s.transactions=[];
-      if(!Array.isArray(s.activity)) s.activity=[];
-      if(!s.denom) s.denom = 20;
-      return s;
-    }catch{ return structuredClone(DEFAULT_STATE) }
-  }
-  function save(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
-
-  // ===== Activity Log =====
-  function log(message, level='info'){
-    const entry = { id: uid('log'), at: new Date().toISOString(), level, message };
-    state.activity.unshift(entry); // newest first
-    state.activity = state.activity.slice(0,500); // cap
-    save(); if($('#logPanel').style.display!=='none') renderLog();
-  }
-  function renderLog(){
-    const list = $('#logList'); list.innerHTML='';
-    if(!state.activity.length){ list.innerHTML = '<div class="log-item"><span>No activity yet.</span><span class="when"></span></div>'; return; }
-    for(const a of state.activity){
-      const el=document.createElement('div');
-      el.className='log-item' + (a.level==='warn'?' warn':a.level==='err'?' err':'');
-      const when = new Date(a.at).toLocaleString();
-      el.innerHTML = `<div>${a.message}</div><div class="when">${when}</div>`;
-      list.appendChild(el);
-    }
-  }
-
-  // ===== Derived =====
-  const envTotal = () => state.envelopes.reduce((sum,e)=> sum + (Number(e.balance)||0), 0);
-  const bankTotal = () => state.bankCurrent; // direct value, set by user
-
-  // ===== Render root =====
-  function renderAll(){
-    renderTop();
-    renderEnvList();
-    renderTxForm();
-    renderTxList();
-    renderPool();
-    setupDrops();
-    toggleEnvEmpty();
-    // Activity log is hidden by default; only render when visible
-    if($('#logPanel').style.display!=='none') renderLog();
-  }
-  function renderTop(){
-    $('#stat-env-balance').textContent = fmt(envTotal());
-    $('#stat-bank-balance').textContent = fmt(bankTotal());
-    $('#pool-amount').textContent = fmt(state.cashPool);
-  }
-
-  // ===== Envelopes =====
-  function renderEnvList(){
-    const list=$('#envList'); list.innerHTML='';
-    state.envelopes.forEach(env=> list.appendChild(renderEnv(env)));
-  }
-  function toggleEnvEmpty(){ $('#envEmpty').style.display = state.envelopes.length? 'none':'block'; }
-
-  function deleteEnvelope(envelopeId){
-    const env = state.envelopes.find(e => e.id === envelopeId);
-    if(!env) return;
-    if((env.balance||0) < 0){
-      alert('Cannot delete an envelope with a shortfall. Cover it first.');
-      return;
-    }
-    if((env.balance||0) > 0){
-      const ok = confirm(`"${env.name}" still has ${fmt(env.balance)}.\nOK = Move to Unassigned & delete\nCancel = Keep envelope`);
-      if(!ok) return;
-      state.cashPool = round2(state.cashPool + env.balance);
-      log(`Deleted envelope "${env.name}" and moved ${fmt(env.balance)} to Unassigned.`);
-    } else {
-      log(`Deleted envelope "${env.name}" (zero balance).`);
-    }
-    state.envelopes = state.envelopes.filter(e => e.id !== envelopeId);
-    save(); renderAll();
-  }
-
-  function reorderEnvelope(sourceId, targetId){
-    if(sourceId === targetId) return;
-    const arr = state.envelopes;
-    const sIndex = arr.findIndex(e => e.id === sourceId);
-    const tIndex = arr.findIndex(e => e.id === targetId);
-    if(sIndex < 0 || tIndex < 0) return;
-    const [item] = arr.splice(sIndex, 1);
-    arr.splice(tIndex, 0, item);
-    save();
-    renderEnvList();
-  }
-
-  function renderEnv(env){
-    const el = document.createElement('div');
-    const neg = (env.balance||0) < 0;
-    el.className='env' + (neg ? ' neg' : '');
-    el.setAttribute('aria-label', `${env.name}, ${fmt(env.balance)} of ${fmt(env.budget)}`);
-    el.draggable = true;
-    el.dataset.dragtype = 'env';
-    el.dataset.envelopeId = env.id;
-
-    const balStr = fmt(env.balance);
-    const budStr = fmt(env.budget);
-    const shortTxt = neg ? `<span class="short"> · Shortfall ${fmt(-env.balance)}</span>` : '';
-
-    el.innerHTML = `
-      <div class="stamp" aria-hidden="true"></div>
-      <div class="window">
-        <div class="name">${env.name}</div>
-        <div class="meta"><span class="bal">${balStr}</span> / <span class="bud">${budStr}</span>${shortTxt}</div>
-      </div>
-      <div class="tape"><div class="bar" style="width:${clamp(((env.balance<=0?0:env.balance)/Math.max(1,env.budget))*100,0,100)}%"></div></div>
-      <div class="actions-inline">
-        ${neg ? '<button class="btn btn-sm" data-act="env-cover" title="Cover shortfall from Unassigned">Cover</button>' : ''}
-        <button class="btn btn-sm" data-act="env-edit" title="Edit envelope">Edit</button>
-        <button class="btn btn-sm" data-act="env-delete" title="Delete envelope">Delete</button>
-      </div>
-    `;
-
-    // drag source (env)
-    el.addEventListener('dragstart', e => {
-      e.dataTransfer.effectAllowed = 'move';
-      e.dataTransfer.setData('text/plain', JSON.stringify({type:'env', envelopeId:env.id}));
-    });
-    // dragover: accepts bill (fund), deposit (assign), env (reorder)
-    el.addEventListener('dragover', e => {
-      e.preventDefault();
-      const p = parseDragData(e);
-      if(p?.type === 'env' && p.envelopeId !== env.id){ el.classList.add('reorder-target'); }
-      else{ el.classList.remove('reorder-target'); }
-      if(p?.type === 'bill') el.classList.add('dragover');
-    });
-    el.addEventListener('dragleave', () => { el.classList.remove('dragover'); el.classList.remove('reorder-target'); });
-    el.addEventListener('drop', e => {
-      e.preventDefault(); el.classList.remove('dragover'); el.classList.remove('reorder-target');
-      const p = parseDragData(e); if(!p) return;
-      if (p.type === 'bill'){
-        const count = Math.max(1, Math.floor(Number(p.count)||1));
-        const desired = p.value * count;
-        const applied = Math.floor(Math.min(desired, state.cashPool) / p.value) * p.value;
-        if(applied>0) allocateToEnvelope(env.id, applied);
-        clearBillSelection();
-      } else if (p.type === 'tx'){
-        assignDepositToEnvelope(p.txId, env.id);
-      } else if (p.type === 'env' && p.envelopeId !== env.id){
-        reorderEnvelope(p.envelopeId, env.id);
-      }
-    });
-
-    el.querySelector('[data-act="env-delete"]').addEventListener('click', (e) => {
-      e.stopPropagation();
-      deleteEnvelope(env.id);
-    });
-    el.querySelector('[data-act="env-edit"]').addEventListener('click', (e) => {
-      e.stopPropagation();
-      openEnvEditModal(env.id);
-    });
-    const coverBtn = el.querySelector('[data-act="env-cover"]');
-    if(coverBtn){
-      coverBtn.addEventListener('click', (e)=>{
-        e.stopPropagation();
-        coverSingleEnv(env.id);
-      });
-    }
-
-    return el;
-  }
-
-  // Show/hide Add Envelope button with form
-  function openEnvForm(){
-    const w=$('#envFormWrap'); w.classList.add('open'); w.setAttribute('aria-hidden','false');
-    const addBtn = $('#toggleEnvForm'); if(addBtn) addBtn.style.display='none';
-    $('#newEnvName').focus();
-  }
-  function closeEnvForm(){
-    const w=$('#envFormWrap'); w.classList.remove('open'); w.setAttribute('aria-hidden','true');
-    const addBtn = $('#toggleEnvForm'); if(addBtn) addBtn.style.display='';
-    ['#newEnvName','#newEnvBudget','#newEnvStartBal'].forEach(s=>{ const el=$(s); if(el) el.value=''; });
-  }
-
-  // Create envelope with starting balance EXACTLY as entered (can be negative). Does NOT touch Unassigned Cash.
-  function addEnvelope(){
-    const name=$('#newEnvName').value.trim();
-    const budget=Number($('#newEnvBudget').value||0);
-    let startBal=Number($('#newEnvStartBal').value);
-    if(!name) return alert('Envelope name required');
-    if(!Number.isFinite(startBal)) startBal = 0;
-    const env = { id:uid('env'), name, budget:Math.max(0,budget), balance:round2(startBal) };
-    state.envelopes.push(env);
-    log(`Created envelope "${env.name}" with budget ${fmt(env.budget)} and starting balance ${fmt(env.balance)}.`);
-    save(); renderAll(); closeEnvForm();
-  }
-
-  // Edit envelope (name, budget, balance). Balance change interacts with Unassigned based on direction, manual only.
-  function openEnvEditModal(id){
-    const env = state.envelopes.find(e=> e.id===id); if(!env) return;
-    editingEnvId = id;
-    $('#editEnvName').value = env.name;
-    $('#editEnvBudget').value = String(env.budget||0);
-    $('#editEnvBalance').value = String(env.balance||0);
-    $('#envEditBackdrop').classList.add('open');
-    setTimeout(()=> $('#editEnvName').focus(), 0);
-  }
-  function closeEnvEditModal(){ editingEnvId = null; $('#envEditBackdrop').classList.remove('open'); }
-
-  function saveEnvEdits(){
-    if(!editingEnvId) return closeEnvEditModal();
-    const env = state.envelopes.find(e=> e.id===editingEnvId); if(!env) return closeEnvEditModal();
-
-    const newName = $('#editEnvName').value.trim() || env.name;
-    const newBudget = Math.max(0, Number($('#editEnvBudget').value)||0);
-    const requested = Number($('#editEnvBalance').value);
-    if(!Number.isFinite(requested)){ alert('Enter a valid number for Balance.'); return; }
-
-    const old = Number(env.balance)||0;
-    let change = round2(requested - old);
-    let note = '';
-
-    if(change > 0){
-      if(state.cashPool <= 0){ alert('Not enough Unassigned Cash to increase balance.'); change = 0; }
-      else if(change > state.cashPool){ alert(`Only ${fmt(state.cashPool)} available to add. Will apply that amount.`); change = state.cashPool; }
-      env.balance = round2(old + change);
-      state.cashPool = round2(state.cashPool - change);
-      if(change>0) note = ` (moved ${fmt(change)} from Unassigned)`;
-    }else if(change < 0){
-      // Reducing balance; only positive portion returns to Unassigned
-      let refund = 0;
-      if(old > 0){
-        refund = (requested >= 0) ? (old - requested) : old;
-      }
-      state.cashPool = round2(state.cashPool + refund);
-      env.balance = requested;
-      if(refund>0) note = ` (returned ${fmt(refund)} to Unassigned)`;
-    }
-
-    log(`Edited envelope "${env.name}" → name "${newName}", budget ${fmt(env.budget)}→${fmt(newBudget)}, balance ${fmt(old)}→${fmt(env.balance)}${note}.`);
-    env.name = newName;
-    env.budget = newBudget;
-
-    save(); renderAll(); closeEnvEditModal();
-  }
-
-  function coverSingleEnv(envelopeId){
-    const env = state.envelopes.find(e=> e.id===envelopeId); if(!env) return;
-    if(env.balance >= 0) return;
-    if(state.cashPool <= 0){ alert('No Unassigned Cash available to cover the shortfall.'); return; }
-    const need = -env.balance;
-    const add = Math.min(need, state.cashPool);
-    env.balance = round2(env.balance + add);
-    state.cashPool = round2(state.cashPool - add);
-    log(`Covered shortfall for "${env.name}" by ${fmt(add)} from Unassigned. New balance ${fmt(env.balance)}.`);
-    save(); renderAll();
-  }
-
-  function allocateToEnvelope(envelopeId, amount){
-    amount=round2(amount);
-    if(amount<=0) return;
-    if(state.cashPool<amount) { alert('Not enough Unassigned Cash'); return; }
-    const env=state.envelopes.find(e=>e.id===envelopeId); if(!env) return;
-    env.balance=round2((Number(env.balance)||0) + amount);
-    state.cashPool=round2(state.cashPool - amount);
-    log(`Added ${fmt(amount)} from Unassigned to "${env.name}".`);
-    save(); renderAll();
-  }
-
-  function moveEnvelopeToCash(envelopeId){
-    const env = state.envelopes.find(x=> x.id===envelopeId); if(!env) return;
-    if((Number(env.balance)||0)<=0) return; // do nothing for zero/negative
-    state.cashPool = round2(state.cashPool + Number(env.balance));
-    log(`Moved ${fmt(env.balance)} from "${env.name}" to Unassigned.`);
-    env.balance = 0; save(); renderAll();
-  }
-
-  // ===== Transactions =====
-  function renderTxForm(){ const wrap = $('#txFormWrap'); if(wrap && wrap.classList.contains('open')) $('#txDate').value = todayISO(); }
-  function renderTxList(){
-    const list=$('#txList'); list.innerHTML='';
-    [...state.transactions].sort((a,b)=> new Date(b.date)-new Date(a.date)).forEach(tx=> list.appendChild(renderTx(tx)));
-    renderTop();
-  }
-
-  function renderTx(tx){
-    const el = document.createElement('div'); el.className='tx';
-    const sign = tx.type==='expense' ? '-' : '+';
-    const paidText = tx.type==='expense' ? ` · paid ${fmt(tx.paidAmount||0)} / ${fmt(tx.amount)}` : '';
-    el.innerHTML = `<div><div><strong>${sign}${fmt(tx.amount)}</strong> · ${tx.merchant||'(No merchant)'}<span class="meta">${paidText}</span></div><div class="meta">${new Date(tx.date).toLocaleDateString()} · id:${tx.id.slice(-5)}</div></div><div style="display:flex; gap:6px;"><button class="btn btn-sm" data-act="delete">Delete</button></div>`;
-
-    if(tx.type==='deposit'){
-      el.draggable = true;
-      el.addEventListener('dragstart', e=> e.dataTransfer.setData('text/plain', JSON.stringify({type:'tx', txId:tx.id})) );
-    }else{
-      el.addEventListener('dragover', e=>{ e.preventDefault(); el.classList.add('dragover'); });
-      el.addEventListener('dragleave', ()=> el.classList.remove('dragover'));
-      el.addEventListener('drop', e=>{
-        e.preventDefault(); el.classList.remove('dragover');
-        const p=parseDragData(e); if(!p) return;
-        if(p.type==='bill'){
-          const count = Math.max(1, Math.floor(Number(p.count)||1));
-          payTransactionWithBills(tx.id, p.value*count);
-          clearBillSelection();
-        } else if(p.type==='env'){
-          payTransactionWithEnvelope(tx.id, p.envelopeId);
-        }
-      });
-    }
-    el.querySelector('[data-act="delete"]').addEventListener('click', ()=> deleteTx(tx.id));
-    return el;
-  }
-
-  function addTxFromForm(){
-    const date=$('#txDate').value||todayISO();
-    const merchant=$('#txMerchant').value.trim();
-    const type=$('#txType').value;
-    const amount=Number($('#txAmount').value||0);
-    if(amount<=0) return alert('Amount must be > 0');
-    const tx={ id:uid('tx'), date, merchant, amount, type, paidAmount: type==='expense'? 0 : undefined };
-    state.transactions.push(tx);
-    log(`Added ${type==='deposit'?'deposit':'expense'} ${fmt(amount)} · ${merchant||'(No merchant)'} (${date}).`);
-    save(); renderAll(); closeTxForm();
-  }
-
-  function deleteTx(id){
-    const i=state.transactions.findIndex(t=>t.id===id);
-    if(i<0) return;
-    const tx=state.transactions[i];
-    state.transactions.splice(i,1); save(); renderAll();
-    log(`Deleted transaction ${tx.type==='deposit'?'+':'-'}${fmt(tx.amount)} · ${tx.merchant||'(No merchant)'} (${tx.date}).`, 'warn');
-    const card = document.getElementById('bankCard');
-    if(card){ card.animate([{boxShadow:'0 0 0 0 rgba(128,226,126,0.0)'},{boxShadow:'0 0 0 6px rgba(128,226,126,0.15)'},{boxShadow:'0 0 0 0 rgba(128,226,126,0.0)'}],{duration:450, easing:'ease-out'}); }
-  }
-
-  // ===== Money & selection =====
-  function parseDragData(e){ try{ return JSON.parse(e.dataTransfer.getData('text/plain')); }catch{ return null; } }
-
-  function renderPool(){
-    $('#pool-amount').textContent = fmt(state.cashPool);
-    const b=$('#bills'); b.innerHTML='';
-    const count=Math.floor(state.cashPool/state.denom);
-    const max=20;
-    const ids=[];
-    for(let i=0;i<Math.min(count,max);i++){ const bill=makeBill(state.denom,i); b.appendChild(bill); ids.push(bill.dataset.billId); }
-    if(count>max){ const s=document.createElement('span'); s.className='more-count'; s.textContent = `+${count-max} more`; b.appendChild(s);}
-    for(const id of [...selectedBills]){ if(!ids.includes(id)) selectedBills.delete(id); }
-    updateSelectionPill();
-  }
-
-  function makeBill(value, index){
-    const el=document.createElement('div'); el.className=`bill bill-${value}`; el.draggable=true; el.dataset.value=String(value);
-    el.dataset.billId = uid('bill');
-    el.dataset.index = String(index);
-    const serial=`NV${String(Math.floor(Math.random()*1e8)).padStart(8,'0')}`;
-    el.innerHTML=`<span class="note-corner tl">$${value}</span><span class="note-center">$${value}</span><span class="note-corner br">$${value}</span><span class="seal">NV</span><span class="serial">${serial}</span><span class="ribbon"></span>`;
-
-    el.addEventListener('click', (e)=>{
-      const id = el.dataset.billId;
-      const idx = Number(el.dataset.index||0);
-      if(e.shiftKey && lastClickedBillIndex!=null){
-        const all = $$('#bills .bill');
-        const [a,b] = [lastClickedBillIndex, idx].sort((x,y)=>x-y);
-        for(let i=a;i<=b;i++){
-          const node = all[i]; if(!node) continue;
-          selectedBills.add(node.dataset.billId);
-          node.classList.add('selected');
-        }
-      }else{
-        if(selectedBills.has(id)){ selectedBills.delete(id); el.classList.remove('selected'); }
-        else { selectedBills.add(id); el.classList.add('selected'); }
-        lastClickedBillIndex = idx;
-      }
-      updateSelectionPill();
-    });
-
-    el.addEventListener('dragstart', e=>{
-      if(!selectedBills.has(el.dataset.billId)){
-        clearBillSelection(false);
-        selectedBills.add(el.dataset.billId);
-        el.classList.add('selected');
-      }
-      const count = selectedBills.size || 1;
-      e.dataTransfer.setData('text/plain', JSON.stringify({type:'bill', value:value, count}));
-      try{
-        const di = document.createElement('canvas');
-        di.width = 160; di.height = 44;
-        const ctx = di.getContext('2d');
-        ctx.fillStyle = '#0b1730'; ctx.fillRect(0,0,160,44);
-        ctx.strokeStyle='#6cb6ff'; ctx.strokeRect(0,0,160,44);
-        ctx.fillStyle='#cfe0ff'; ctx.font='bold 14px Roboto, Arial';
-        ctx.fillText(`$${value} × ${count} = $${value*count}`, 8, 26);
-        e.dataTransfer.setDragImage(di, 10, 22);
-      }catch{}
-    });
-
-    if(selectedBills.has(el.dataset.billId)) el.classList.add('selected');
-    return el;
-  }
-
-  function updateSelectionPill(){ $('#selCountPill').textContent = `Selected: ${selectedBills.size}`; }
-  function clearBillSelection(updateDom=true){
-    if(updateDom){ $$('#bills .bill.selected').forEach(b=> b.classList.remove('selected')); }
-    selectedBills.clear(); lastClickedBillIndex=null; updateSelectionPill();
-  }
-
-  function setupDrops(){
-    const tray = $('#billTray');
-    const panel = $('#moneyPanel');
-    ['dragenter','dragover'].forEach(ev => {
-      tray.addEventListener(ev, e=>{ e.preventDefault(); tray.classList.add('drop-active'); });
-      panel.addEventListener(ev, e=>{ e.preventDefault(); });
-    });
-    tray.addEventListener('dragleave', ()=> tray.classList.remove('drop-active'));
-    tray.addEventListener('drop', e=>{
-      e.preventDefault(); tray.classList.remove('drop-active');
-      const p=parseDragData(e); if(!p) return;
-      if(p.type==='tx') convertDepositToCash(p.txId);
-      if(p.type==='env') moveEnvelopeToCash(p.envelopeId);
-      if(p.type==='bill'){ clearBillSelection(); }
-    });
-    panel.addEventListener('drop', e=>{
-      if(e.target && (e.target.closest && e.target.closest('#billTray'))) return;
-      e.preventDefault(); const p=parseDragData(e); if(!p) return;
-      if(p.type==='tx') convertDepositToCash(p.txId);
-      if(p.type==='env') moveEnvelopeToCash(p.envelopeId);
-      if(p.type==='bill'){ clearBillSelection(); }
-    });
-  }
-
-  // ====== Auto-cover disabled everywhere (kept from R23) ======
-  function convertDepositToCash(txId){
-    const tx = state.transactions.find(t=>t.id===txId); if(!tx) return;
-    if(tx.type!=='deposit'){ alert('Only deposit (positive) transactions can be converted here.'); return; }
-    state.cashPool = round2(state.cashPool + tx.amount);
-    state.archived.deposits = round2(state.archived.deposits + tx.amount);
-    log(`Converted deposit ${fmt(tx.amount)} to Unassigned (no auto-cover).`);
-    state.transactions = state.transactions.filter(t=>t.id!==txId);
-    save(); renderAll();
-  }
-
-  function assignDepositToEnvelope(txId, envId){
-    const tx = state.transactions.find(t => t.id === txId);
-    const env = state.envelopes.find(e => e.id === envId);
-    if(!tx || tx.type !== 'deposit' || !env) return;
-    env.balance = round2((Number(env.balance)||0) + tx.amount);
-    state.archived.deposits = round2(state.archived.deposits + tx.amount);
-    log(`Assigned deposit ${fmt(tx.amount)} to "${env.name}".`);
-    state.transactions = state.transactions.filter(t => t.id !== txId);
-    save(); renderAll();
-  }
-
-  function payTransactionWithBills(txId, bundle){
-    const tx = state.transactions.find(t=>t.id===txId);
-    if(!tx || tx.type!=='expense') return;
-    if(state.cashPool <= 0) { alert('Not enough Unassigned Cash.'); return; }
-    const remaining = tx.amount - (tx.paidAmount||0);
-    const applied = round2(Math.min(remaining, bundle, state.cashPool));
-    if(applied <= 0) return;
-    state.cashPool = round2(state.cashPool - applied);
-    tx.paidAmount = round2((tx.paidAmount||0) + applied);
-    log(`Paid ${fmt(applied)} of expense with Unassigned cash. Remaining: ${fmt(remaining - applied)}.`);
-    if(tx.paidAmount >= tx.amount - 1e-6){
-      state.archived.expenses = round2(state.archived.expenses + tx.amount);
-      state.transactions = state.transactions.filter(t=>t.id!==txId);
-      log(`Expense ${fmt(tx.amount)} fully paid and archived.`);
-    }
-    save(); renderAll();
-  }
-
-  // Envelope can overspend (go negative). Unassigned never < 0.
-  function payTransactionWithEnvelope(txId, envId){
-    const tx = state.transactions.find(t => t.id === txId);
-    const env = state.envelopes.find(e => e.id === envId);
-    if(!tx || tx.type !== 'expense' || !env) return;
-    const remaining = tx.amount - (tx.paidAmount || 0);
-    if(remaining <= 0) return;
-    env.balance = round2((Number(env.balance)||0) - remaining);
-    tx.paidAmount = round2((tx.paidAmount || 0) + remaining);
-    state.archived.expenses = round2(state.archived.expenses + tx.amount);
-    state.transactions = state.transactions.filter(t => t.id !== txId);
-    log(`Paid expense ${fmt(tx.amount)} from envelope "${env.name}". New env balance: ${fmt(env.balance)} (negative allowed).`);
-    save(); renderAll();
-  }
-
-  // ===== App State Export/Import =====
-  function download(filename, text, type='application/json'){
-    const blob = new Blob([text], {type});
-    const url = URL.createObjectURL(blob);
-    const a=document.createElement('a');
-    a.href=url; a.download=filename; a.style.display='none';
-    document.body.appendChild(a); a.click();
-    setTimeout(()=>{ URL.revokeObjectURL(url); a.remove(); }, 0);
-  }
-  function exportData(){
-    // Entire state, including activity log
-    download(`nvelopes-${new Date().toISOString().replace(/[:.]/g,'-')}.json`, JSON.stringify(state,null,2));
-    log('Exported state to JSON.');
-  }
-  function importData(){
-    const inp=document.createElement('input'); inp.type='file'; inp.accept='application/json';
-    inp.onchange=()=>{ const f=inp.files?.[0]; if(!f) return;
-      const r=new FileReader();
-      r.onload=()=>{ try{
-        const incoming=JSON.parse(r.result);
-        // ensure shape
-        state={
-          bankCurrent: typeof incoming.bankCurrent==='number' ? incoming.bankCurrent
-                       : (typeof incoming.bankStarting==='number' ? round2(incoming.bankStarting + (incoming.archived?.deposits||0) - (incoming.archived?.expenses||0)) : 0),
-          cashPool: incoming.cashPool||0,
-          denom: incoming.denom||20,
-          archived: incoming.archived||{deposits:0,expenses:0},
-          envelopes: Array.isArray(incoming.envelopes)?incoming.envelopes:[],
-          transactions: Array.isArray(incoming.transactions)?incoming.transactions:[],
-          activity: Array.isArray(incoming.activity)?incoming.activity:[]
-        };
-        save(); renderAll();
-        log('Imported state from JSON.');
-      }catch{ alert('Invalid file'); log('Import failed: invalid JSON','err'); } };
-      r.readAsText(f);
-    }; inp.click();
-  }
-
-  // ===== Bank Modal (Current Balance) =====
-  function openBankModal(){
-    const bd=$('#bankModalBackdrop'); const input=$('#bankCurrentInput');
-    if(!bd||!input) return;
-    input.value = String(state.bankCurrent||0);
-    bd.classList.add('open');
-    setTimeout(()=> input.focus(), 0);
-  }
-  function closeBankModal(){ const bd=$('#bankModalBackdrop'); if(bd) bd.classList.remove('open'); }
-  function saveBankCurrent(){
-    const v = Number($('#bankCurrentInput').value);
-    if(!Number.isFinite(v) || v < 0){ alert('Please enter a valid non-negative number.'); return; }
-    state.bankCurrent = round2(v);
-    save(); closeBankModal(); renderAll();
-    log(`Set current bank balance to ${fmt(state.bankCurrent)}.`);
-  }
-
-  // Tx form controls
-  function openTxForm(){ const wrap=$('#txFormWrap'); wrap.classList.add('open'); wrap.setAttribute('aria-hidden','false'); $('#txDate').value=todayISO(); $('#txMerchant').focus(); }
-  function closeTxForm(){ const wrap=$('#txFormWrap'); wrap.classList.remove('open'); wrap.setAttribute('aria-hidden','true'); ['#txDate','#txMerchant','#txAmount'].forEach(s=>{ const el=$(s); if(el) el.value=''; }); }
-
-  // ===== Excel/CSV Import =====
-  const ACCEPTED_TYPES=['xlsx','xls','csv'];
-  const COL_ALIASES={date:['date','posted date','transaction date','time'], merchant:['merchant','description','name','memo','payee'], amount:['amount','amt','value','total'], type:['type','txn type','transaction type']};
-  const normalizeHeader=h=>String(h||'').trim().toLowerCase();
-  const findCol=(map,key)=>{const wanted=COL_ALIASES[key]; for(const k of Object.keys(map)){ if(wanted.includes(k)) return map[k]; } return null;};
-  function parseExcelDate(v){ if(v==null||v==='') return todayISO(); if(v instanceof Date) return v.toISOString().slice(0,10); if(typeof v==='number'){ const epoch=new Date(Date.UTC(1899,11,30)); const ms=v*86400000; const d=new Date(epoch.getTime()+ms); return d.toISOString().slice(0,10);} const t=String(v).trim(); const tryDirect=new Date(t); if(!isNaN(tryDirect)) return tryDirect.toISOString().slice(0,10); return todayISO(); }
-  const coerceAmount=a=>{ if(a==null||a==='') return NaN; let s=String(a).replace(/[$,\s]/g,''); const num=Number(s); return Number.isFinite(num)?num:NaN; };
-  function decideType(typeCell, amount){ const t=String(typeCell||'').trim().toLowerCase(); if(t==='expense'||t==='debit'||t==='withdrawal'||t==='payment') return 'expense'; if(t==='deposit'||t==='credit'||t==='refund') return 'deposit'; if(Number.isFinite(amount)) return amount<0?'expense':'deposit'; return 'expense'; }
-  async function importExcelOrCsv(file){
-    const ext=file.name.split('.').pop().toLowerCase();
-    if(!ACCEPTED_TYPES.includes(ext)) return alert('Please select an .xlsx, .xls, or .csv file.');
-    if(ext==='csv'){ const text=await file.text(); return importCsv(text); }
-    const data=await file.arrayBuffer();
-    const wb=XLSX.read(data,{type:'array'});
-    const first=wb.Sheets[wb.SheetNames[0]];
-    const rows=XLSX.utils.sheet_to_json(first,{header:1,raw:true});
-    return importRows(rows);
-  }
-  function importCsv(text){
-    const rows=text.split(/\r?\n/).map(r=> r.split(/,(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)/).map(c=> c.replace(/^\"|\"$/g,'')));
-    return importRows(rows);
-  }
-  function importRows(rows){
-    if(!rows||!rows.length) return alert('No rows found.');
-    const header=rows[0].map(normalizeHeader);
-    const headerMap={}; header.forEach((h,i)=> headerMap[h]=i);
-    const idx={date:findCol(headerMap,'date'), merchant:findCol(headerMap,'merchant'), amount:findCol(headerMap,'amount'), type:findCol(headerMap,'type')};
-    if(idx.amount==null) return alert('Missing Amount column. Include a column named Amount/Value/Total.');
-    let added=0, skipped=0;
-    for(let r=1;r<rows.length;r++){
-      const row=rows[r]; if(!row||row.every(c=> String(c||'').trim()==='')) continue;
-      const amountRaw=idx.amount!=null ? row[idx.amount] : null;
-      const amountVal=coerceAmount(amountRaw);
-      if(!Number.isFinite(amountVal)){ skipped++; continue; }
-      const typeCell=idx.type!=null ? row[idx.type] : '';
-      const txnType=decideType(typeCell, amountVal);
-      const merchant=idx.merchant!=null ? String(row[idx.merchant]||'').trim() : '';
-      const dateCell=idx.date!=null ? row[idx.date] : null;
-      const date=parseExcelDate(dateCell);
-      const absAmount=Math.abs(amountVal);
-      const tx={ id:uid('tx'), date, merchant, amount:absAmount, type:txnType, paidAmount: txnType==='expense' ? 0 : undefined };
-      state.transactions.push(tx); added++;
-    }
-    save(); renderAll(); log(`Imported ${added} transaction(s)${skipped?`, skipped ${skipped}.`:'.'}`);
-  }
-
-  // ===== Events =====
-  $('#toggleEnvForm').addEventListener('click', ()=>{ const wrap=$('#envFormWrap'); wrap.classList.contains('open')? closeEnvForm() : openEnvForm(); });
-  $('#addEnvelopeConfirm').addEventListener('click', addEnvelope);
-  $('#cancelEnvForm').addEventListener('click', closeEnvForm);
-
-  $('#envEditCancel').addEventListener('click', closeEnvEditModal);
-  $('#envEditSave').addEventListener('click', saveEnvEdits);
-
-  $('#toggleTxForm').addEventListener('click', ()=>{ const wrap=$('#txFormWrap'); wrap.classList.contains('open')? closeTxForm() : openTxForm(); });
-  $('#addTxConfirm').addEventListener('click', addTxFromForm);
-  $('#cancelTxForm').addEventListener('click', closeTxForm);
-
-  $('#exportBtn').addEventListener('click', exportData);
-  $('#importBtn').addEventListener('click', importData);
-  $('#resetBtn').addEventListener('click', ()=>{ if(!confirm('Reset and clear all data?')) return; state=structuredClone(DEFAULT_STATE); save(); clearBillSelection(); renderAll(); log('Reset all data.','warn'); });
-
-  $('#setBankBtn').addEventListener('click', openBankModal);
-  $('#bankCard').addEventListener('click', openBankModal);
-  $('#bankCancel').addEventListener('click', closeBankModal);
-  $('#bankSave').addEventListener('click', saveBankCurrent);
-
-  // Show/Hide Activity Log (hidden by default)
-  const logPanel = $('#logPanel');
-  const toggleLogBtn = $('#toggleLogBtn');
-  toggleLogBtn.addEventListener('click', ()=>{
-    const vis = logPanel.style.display !== 'none';
-    if(vis){ logPanel.style.display='none'; toggleLogBtn.textContent='Show Activity Log'; }
-    else { logPanel.style.display='block'; toggleLogBtn.textContent='Hide Activity Log'; renderLog(); }
-  });
-
-  document.querySelector('#denomControls').addEventListener('click', e=>{
-    const btn=e.target.closest('button'); if(!btn) return;
-    const d=btn.dataset.denom;
-    if(d){ state.denom=Number(d); save(); clearBillSelection(); renderPool(); log(`Set denomination to $${state.denom}.`); return; }
-  });
-  $('#create-cash').addEventListener('click', ()=>{
-    const n=Number(prompt('Create cash in Unassigned', '100'))||0;
-    if(n<=0) return;
-    state.cashPool = round2(state.cashPool + n); // no auto-cover!
-    save(); renderAll();
-    log(`Created ${fmt(n)} in Unassigned (no auto-cover).`);
-  });
-  $('#delete-cash').addEventListener('click', ()=>{
-    const n=Number(prompt('Delete cash from Unassigned', '50'))||0;
-    if(n<=0) return;
-    if(state.cashPool<n) return alert('Not enough Unassigned Cash');
-    state.cashPool=round2(state.cashPool - n); save(); clearBillSelection(); renderAll();
-    log(`Deleted ${fmt(n)} from Unassigned.`);
-  });
-
-  $('#selClearBtn').addEventListener('click', ()=> clearBillSelection());
-
-  $('#excelImportBtn').addEventListener('click', ()=> $('#excelFile').click());
-  $('#excelFile').addEventListener('change', async (e)=>{ const file=e.target.files?.[0]; if(!file) return; await importExcelOrCsv(file); e.target.value=''; });
-
-  $('#clearLogBtn').addEventListener('click', ()=>{ if(!confirm('Clear activity log?')) return; state.activity=[]; save(); if(logPanel.style.display!=='none') renderLog(); });
-
-  document.addEventListener('keydown', e=>{
-    if(e.key==='Escape'){
-      const bd=$('#bankModalBackdrop'); if(bd && bd.classList.contains('open')) closeBankModal();
-      const txOpen=$('#txFormWrap').classList.contains('open'); const envOpen=$('#envFormWrap').classList.contains('open');
-      if(txOpen) closeTxForm(); if(envOpen) closeEnvForm();
-      clearBillSelection();
-      closeEnvEditModal();
-    }
-  });
-
-  // expose minimal helpers for debugging
-  window.__nvelopes = { state, save, renderAll };
-
-  // Boot
-  renderAll();
-})();
-</script>
+  <script>
+    document.getElementById('year').textContent = new Date().getFullYear();
+  </script>
 </body>
 </html>
